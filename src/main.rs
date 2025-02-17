@@ -1,0 +1,48 @@
+// Copyright 2025 N. Dornseif
+//
+// Dual-licensed under Apache 2.0 and MIT terms.
+
+//! Collection of PRNGS and methods for statistical analysis.
+
+#![allow(dead_code, unused_macros)]
+
+pub mod rngs;
+pub mod stats;
+mod utils;
+
+use rngs::RNG;
+
+macro_rules! time_it {
+    ($tip:literal, $func:stmt) => {
+        let start = std::time::Instant::now();
+        $func
+        println!("{}: {:?}", $tip, start.elapsed());
+    };
+}
+
+fn test_suite(test_rng: &mut impl RNG, sample_size: usize, randomseeds: usize) {
+    println!("Generating {} per test.", utils::format_byte_count(sample_size * 8));
+    println!("Running reference RNG byte chi squared test.");
+    let start = std::time::Instant::now();
+    let (chi_squared, p) = stats::bytes_chi_squared_test_reference(sample_size);
+    println!("Time: {:?}    Chi squared: {:.2}  p: {:.4}",start.elapsed(), chi_squared,p);
+    let mut seeds: Vec<u64> = vec![0,1,0xffffffffffffffff];
+    for _ in 0..randomseeds {
+        seeds.push(rand::random::<u64>());
+    }
+    for seed in seeds.iter() {
+        test_rng.reseed(*seed);
+        println!("Testing byte chi squared for seed: {:#01x}", seed);
+        let start = std::time::Instant::now();
+        let (chi_squared, p) = stats::bytes_chi_squared_test(test_rng, sample_size);
+        println!("Time: {:?}    Chi squared: {:.2}  p: {:.4}",start.elapsed(), chi_squared,p);
+    }
+
+}
+
+fn main() {
+    const TEST_FILE_PATH: &str = "testfiles/b.ppm";
+    let mut r = rngs::stream_nlarx::StreamNLARXu128::new(0);
+    let sample_exponent: usize = 30;
+    test_suite(&mut r, 1 << sample_exponent, 3);
+}
