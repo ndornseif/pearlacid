@@ -14,7 +14,6 @@ use statrs::distribution::{ChiSquared, ContinuousCDF};
 
 use crate::rngs::RNG;
 
-
 /// Count the number of each possible byte in a Vec<u8>.
 pub fn count_bytes(sample: &Vec<u8>) -> [usize; 256] {
     let mut counts: [usize; 256] = [0; 256];

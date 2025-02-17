@@ -135,12 +135,12 @@ pub mod xorshift {
         }
 
         fn reseed(&mut self, seed: u64) {
-            self.state =  [
-                    (seed & 0xFFFFFFFF) as u32,
-                    (seed >> 32) as u32,
-                    (seed & 0xFFFFFFFF) as u32,
-                    (seed >> 32) as u32,
-                ];
+            self.state = [
+                (seed & 0xFFFFFFFF) as u32,
+                (seed >> 32) as u32,
+                (seed & 0xFFFFFFFF) as u32,
+                (seed >> 32) as u32,
+            ];
         }
     }
 }
