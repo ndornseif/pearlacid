@@ -26,7 +26,6 @@ pub trait RNG {
 
 /// Steam cipher based, add–rotate–XOR PRNG with non linear step.
 /// Allows seeking to any position in the output stream.
-/// Available: StreamNLARXu128
 pub mod stream_nlarx {
     use super::RNG;
     const INITIAL_STATE: u64 = 0;
@@ -34,7 +33,6 @@ pub mod stream_nlarx {
     const XOR_CONST: u128 = 0x65dcfc916d8e80c9c3cdd6d59b50c964;
 
     #[derive(Debug, Copy, Clone)]
-    ///
     pub struct StreamNLARXu128 {
         state: u128,
     }
@@ -114,8 +112,7 @@ pub mod xorshift {
             let mut t: u32 = self.state[3];
             let s: u32 = self.state[0];
             self.state[3] = self.state[2];
-            self.state[2] = self.stat
-            e[1];
+            self.state[2] = self.state[1];
             self.state[1] = s;
             t ^= t << 11;
             t ^= t >> 8;
@@ -157,6 +154,10 @@ pub mod lcg {
     pub struct RANDU {
         state: u32,
     }
+
+    pub struct MMIX {
+        state: u64
+    }
     impl RNG for RANDU {
         fn new(seed: u64) -> Self {
             RANDU { state: seed as u32 }
@@ -177,7 +178,7 @@ pub mod lcg {
 
         fn advance(&mut self, delta: usize) {
             for _ in 0..delta {
-                let _ = self.next_u32();
+                let _ = self.next_small();
             }
         }
 
@@ -190,6 +191,32 @@ pub mod lcg {
         fn next_small(&mut self) -> u32 {
             self.state = (self.state * 65539) & 0x7fffffff;
             self.state
+        }
+    }
+
+    impl RNG for MMIX {
+        fn new(seed: u64) -> Self {
+            MMIX { state: seed }
+        }
+
+        fn next_u32(&mut self) -> u32 {
+            self.next() as u32
+        }
+
+        fn next(&mut self) -> u64 {
+            self.state = self.state.wrapping_mul(0x5851f42d4c957f2d);
+            self.state = self.state.wrapping_add(0x14057b7ef767814f);
+            self.state
+        }
+
+        fn advance(&mut self, delta: usize) {
+            for _ in 0..delta {
+                let _ = self.next();
+            }
+        }
+
+        fn reseed(&mut self, seed: u64) {
+            self.state = seed;
         }
     }
 }
