@@ -155,9 +155,6 @@ pub mod lcg {
         state: u32,
     }
 
-    pub struct MMIX {
-        state: u64
-    }
     impl RNG for RANDU {
         fn new(seed: u64) -> Self {
             RANDU { state: seed as u32 }
@@ -193,6 +190,10 @@ pub mod lcg {
             self.state
         }
     }
+    /// Originaly designed by Donald Knuth
+    pub struct MMIX {
+        state: u64,
+    }
 
     impl RNG for MMIX {
         fn new(seed: u64) -> Self {
@@ -217,6 +218,55 @@ pub mod lcg {
 
         fn reseed(&mut self, seed: u64) {
             self.state = seed;
+        }
+    }
+
+    pub struct ULSLCG512 {
+        state: [u128; 4],
+    }
+
+    impl RNG for ULSLCG512 {
+        fn new(seed: u64) -> Self {
+            ULSLCG512 {
+                state: [
+                    (!seed as u128) << 64 | !seed as u128,
+                    (seed as u128) << 64 | seed as u128,
+                    (seed as u128) << 64 | !seed as u128,
+                    (!seed as u128) << 64 | seed as u128,
+                ]
+            }
+        }
+
+        fn next_u32(&mut self) -> u32 {
+            self.next() as u32
+        }
+
+        fn next(&mut self) -> u64 {
+            self.state[0] = self.state[0].wrapping_mul(0x59ca1b2888a0a80fc054cd25b1fde311);
+            self.state[0] = self.state[0].wrapping_add(0xa53a3854d740d22b4802f2e6ea01e350);
+            self.state[1] = self.state[1].wrapping_mul(0xade47f9859546ba094573e7c2194a93c);
+            self.state[1] = self.state[1].wrapping_add(0xc77A0728309148b95143795d657a29f2);
+            self.state[2] = self.state[2].wrapping_mul(0x85fec39e4833d57dd07f903f191ecfd3);
+            self.state[2] = self.state[2].wrapping_add(0x77421f2a59df2305739f337afcad9edb);
+            self.state[3] = self.state[3].wrapping_mul(0xcdf30907584f7e1551c0667353108b63);
+            self.state[3] = self.state[3].wrapping_add(0x935fec88eaba8c39e94503587c22ce99);
+            ((self.state[0] >> 64)as u64) ^ ((self.state[1] >> 64)as u64) ^ ((self.state[2] >> 64)as u64) ^ ((self.state[3] >> 64)as u64)
+
+        }
+
+        fn advance(&mut self, delta: usize) {
+            for _ in 0..delta {
+                let _ = self.next();
+            }
+        }
+
+        fn reseed(&mut self, seed: u64) {
+            self.state = [
+                    (seed as u128) << 64 | seed as u128,
+                    (seed as u128) << 64 | seed as u128,
+                    (seed as u128) << 64 | seed as u128,
+                    (seed as u128) << 64 | seed as u128,
+                ];
         }
     }
 }

@@ -89,6 +89,15 @@ Linear congruential generators.
 | State Size | 64 |
 | Supports | |
 
+
+| ULSLCG512 |   |
+|---|---|
+| Speed | 100% |
+| Fails Tests | None |
+| Bits per Step | 64 |
+| State Size | 512 |
+| Supports | |
+
 ## License
 
 Licensed under either of the following, at your option:
