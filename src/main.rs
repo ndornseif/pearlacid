@@ -20,16 +20,23 @@ macro_rules! time_it {
     };
 }
 
-/// Perform chi squared test for supplied RNG.
+/// Perform performance tests for supplied RNGs.
 /// Uses 0,1 and all ones as fixed seeds.
-/// Also generates 'randomseeds' additional random testseeds using the rand crate.
-/// The rand crate is also used to run a reference chi squared test.
-fn test_suite(test_rng: &mut impl RNG, sample_size: usize, randomseeds: usize) {
+/// Also generates 'randomseeds' additional random test seeds using the rand crate.
+/// The rand crate is also used to run a reference test.
+fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, randomseeds: usize) {
+    let sample_size: usize = 1 << sample_exponent;
+    let leading_zeroes: usize = if sample_exponent > 14 {
+        sample_exponent - 14
+    } else {
+        1
+    };
+
     println!(
         "Generating {} per test.",
         utils::format_byte_count(sample_size * 8)
     );
-    println!("Running reference RNG byte chi2 test.");
+    println!("Running rand crate reference test.");
     let start = std::time::Instant::now();
     let (chi_squared, p) = stats::bytes_chi_squared_test_reference(sample_size);
     println!(
@@ -38,13 +45,22 @@ fn test_suite(test_rng: &mut impl RNG, sample_size: usize, randomseeds: usize) {
         chi_squared,
         p
     );
-    let mut seeds: Vec<u64> = vec![0, 1, 0xffffffffffffffff];
+    let start = std::time::Instant::now();
+    let avg_distance = stats::leading_zeros_frequency_test_reference(sample_size, leading_zeroes);
+    println!(
+        "Time: {:?}    Leading zeros: {:.2}   Dist:  Expected: {:.4}    Measured: {:.0}",
+        start.elapsed(),
+        leading_zeroes,
+        1 << leading_zeroes,
+        avg_distance
+    );
+    let mut seeds: Vec<u64> = vec![0, 1, u64::MAX];
     for _ in 0..randomseeds {
         seeds.push(rand::random::<u64>());
     }
     for seed in seeds.iter() {
         test_rng.reseed(*seed);
-        println!("Testing byte chi2 for seed: {:#01x}", seed);
+        println!("Testing for seed: {:#01x}", seed);
         let start = std::time::Instant::now();
         let (chi_squared, p) = stats::bytes_chi_squared_test(test_rng, sample_size);
         println!(
@@ -53,12 +69,34 @@ fn test_suite(test_rng: &mut impl RNG, sample_size: usize, randomseeds: usize) {
             chi_squared,
             p
         );
+        let start = std::time::Instant::now();
+        let avg_distance =
+            stats::leading_zeros_frequency_test(test_rng, sample_size, leading_zeroes);
+        println!(
+            "Time: {:?}    Leading zeros: {:.2}   Dist:  Expected: {:.4}    Measured: {:.0}",
+            start.elapsed(),
+            leading_zeroes,
+            1 << leading_zeroes,
+            avg_distance
+        );
     }
 }
 
 fn main() {
-    let sample_exponent: usize = 30;
+    const TEST_SIZE_EXPONENT: usize = 32;
+    const RANDOMSEEDS: usize = 4;
     let mut r = rngs::lcg::Lehmer64::new(0);
-    test_suite(&mut r, 1 << sample_exponent, 3);
-    //let _ = stats::fill_test_image("testfiles/d.ppm", &mut r, 7680, 4320);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
+    let mut r = rngs::lcg::ULSLCG512::new(0);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
+    let mut r = rngs::lcg::MMIX::new(0);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
+    let mut r = rngs::lcg::ULSLCG512::new(0);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
+    let mut r = rngs::lcg::ULSLCG512H::new(0);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
+    let mut r = rngs::xorshift::XORShift128::new(0);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
+    let mut r = rngs::stream_nlarx::StreamNLARXu128::new(0);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
 }
