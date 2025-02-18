@@ -269,4 +269,53 @@ pub mod lcg {
                 ];
         }
     }
+
+    pub struct ULSLCG512H {
+        state: [u128; 4],
+    }
+
+    impl RNG for ULSLCG512H {
+        fn new(seed: u64) -> Self {
+            ULSLCG512H {
+                state: [
+                    (!seed as u128) << 64 | !seed as u128,
+                    (seed as u128) << 64 | seed as u128,
+                    (seed as u128) << 64 | !seed as u128,
+                    (!seed as u128) << 64 | seed as u128,
+                ]
+            }
+        }
+
+        fn next_u32(&mut self) -> u32 {
+            self.next() as u32
+        }
+
+        fn next(&mut self) -> u64 {
+            self.state[0] = self.state[0].wrapping_mul(0xe7513927bf96492135e503ed7f5b837e);
+            self.state[0] = self.state[0].wrapping_add(0x126b06c2bfe2dac7725ee66c0e1efe69);
+            self.state[1] = self.state[1].wrapping_mul(0x6420fafa38bd7d81fc02e8cbfac57698);
+            self.state[1] = self.state[1].wrapping_add(0xd2a884d8ed65a425999f67abfa901eba);
+            self.state[2] = self.state[2].wrapping_mul(0x3072f956f9d4a9531efd7c4bd3f684f5);
+            self.state[2] = self.state[2].wrapping_add(0x2f18c679c54a581aef3f88efa973d2c9);
+            self.state[3] = self.state[3].wrapping_mul(0xa7b5b12dc766a03cfdbaf54bacac8382);
+            self.state[3] = self.state[3].wrapping_add(0xb12c82d5df1c4e33fd207ba107b9c620);
+            (self.state[0].wrapping_add(self.state[1].wrapping_add(self.state[2].wrapping_add(self.state[3]))) >> 64) as u64
+
+        }
+
+        fn advance(&mut self, delta: usize) {
+            for _ in 0..delta {
+                let _ = self.next();
+            }
+        }
+
+        fn reseed(&mut self, seed: u64) {
+            self.state = [
+                    (seed as u128) << 64 | seed as u128,
+                    (seed as u128) << 64 | seed as u128,
+                    (seed as u128) << 64 | seed as u128,
+                    (seed as u128) << 64 | seed as u128,
+                ];
+        }
+    }
 }
