@@ -64,8 +64,8 @@ Based on the well-established xorshift architecture.
 |---|---|
 | Speed | 170% |
 | Fails Tests | None |
-| Bits per Step | 32 |
-| State Size | 128 |
+| Output per Step | 32 bits |
+| State Size | 128 bits |
 | Supports | |
 
 ### lcg
@@ -75,8 +75,8 @@ Linear congruential generators.
 |---|---|
 | Speed | 170% |
 | Fails Tests | Chi², Spectral |
-| Bits per Step | 31 |
-| State Size | 32 |
+| Output per Step | 31 bits |
+| State Size | 32 bits |
 | Supports | `next_small` |
 
 
@@ -85,8 +85,8 @@ Linear congruential generators.
 |---|---|
 | Speed | 220% |
 | Fails Tests | None |
-| Bits per Step | 64 |
-| State Size | 64 |
+| Output per Step | 64 bits |
+| State Size | 64 bits |
 | Supports | |
 
 
@@ -94,8 +94,8 @@ Linear congruential generators.
 |---|---|
 | Speed | 100% |
 | Fails Tests | None |
-| Bits per Step | 64 |
-| State Size | 512 |
+| Output per Step | 64 bits |
+| State Size | 512 bits |
 | Supports | |
 
 ## License
