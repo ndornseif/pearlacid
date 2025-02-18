@@ -13,7 +13,7 @@ pub fn xor_in_place(a: &mut [u64], b: &[u64]) {
 }
 
 /// Maps a u64 to the 0..1 range in f64.
-/// The destribution is unoform but only uses
+/// The destribution is uniform but only uses
 /// the lower 52 bits of the u64.
 /// Not all possible f64 in the output range are produced by this function.
 pub fn u64_to_double(int: u64) -> f64 {
