@@ -114,7 +114,8 @@ pub mod xorshift {
             let mut t: u32 = self.state[3];
             let s: u32 = self.state[0];
             self.state[3] = self.state[2];
-            self.state[2] = self.state[1];
+            self.state[2] = self.stat
+            e[1];
             self.state[1] = s;
             t ^= t << 11;
             t ^= t >> 8;
@@ -136,9 +137,9 @@ pub mod xorshift {
 
         fn reseed(&mut self, seed: u64) {
             self.state = [
-                (seed & 0xFFFFFFFF) as u32,
+                seed as u32,
                 (seed >> 32) as u32,
-                (seed & 0xFFFFFFFF) as u32,
+                seed as u32,
                 (seed >> 32) as u32,
             ];
         }
@@ -150,8 +151,9 @@ pub mod lcg {
     use super::RNG;
     /// Ill concieved early LCG, that fails the spectral test badly.
     /// Only has output space of 0-2**31-1.
-    /// The .next() method used three RANDU calls to fill the 64 bit output space,
-    /// the .next_u32() method returns the reduced original output space.
+    /// The .next() method uses three RANDU calls to fill the 64 bit output space,
+    /// The .next_u32() method uses two RANDU calls.
+    /// the .next_small() method returns the reduced original output space.
     pub struct RANDU {
         state: u32,
     }
@@ -161,14 +163,15 @@ pub mod lcg {
         }
 
         fn next_u32(&mut self) -> u32 {
-            self.state = (self.state * 65539) & 0x7fffffff;
-            self.state
+            let a: u32 = self.next_small();
+            let b: u32 = self.next_small();
+            a << 15 | (b & 0xffff)
         }
 
         fn next(&mut self) -> u64 {
-            let a: u64 = self.next_u32() as u64;
-            let b: u64 = self.next_u32() as u64;
-            let c: u64 = self.next_u32() as u64;
+            let a: u64 = self.next_small() as u64;
+            let b: u64 = self.next_small() as u64;
+            let c: u64 = self.next_small() as u64;
             (a << 42) | ((b & 0x3fffff) << 20) | (c & 0xfffff)
         }
 
@@ -180,6 +183,13 @@ pub mod lcg {
 
         fn reseed(&mut self, seed: u64) {
             self.state = seed as u32;
+        }
+    }
+    impl RANDU {
+        /// Generate a number in the original reduced output space of 0 to 2**31 - 1.
+        fn next_small(&mut self) -> u32 {
+            self.state = (self.state * 65539) & 0x7fffffff;
+            self.state
         }
     }
 }
