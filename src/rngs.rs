@@ -90,7 +90,7 @@ pub mod stream_nlarx {
 // Xorshift PRNGs
 pub mod xorshift {
     use super::RNG;
-
+    #[derive(Debug, Copy, Clone)]
     pub struct XORShift128 {
         state: [u32; 4],
     }
@@ -150,6 +150,7 @@ pub mod lcg {
     /// The .next() method uses three RANDU calls to fill the 64 bit output space,
     /// The .next_u32() method uses two RANDU calls.
     /// the .next_small() method returns the reduced original output space.
+    #[derive(Debug, Copy, Clone)]
     pub struct RANDU {
         state: u32,
     }
@@ -190,6 +191,7 @@ pub mod lcg {
         }
     }
     /// Originaly designed by Donald Knuth
+    #[derive(Debug, Copy, Clone)]
     pub struct MMIX {
         state: u64,
     }
@@ -219,7 +221,7 @@ pub mod lcg {
             self.state = seed;
         }
     }
-
+    #[derive(Debug, Copy, Clone)]
     pub struct ULSLCG512 {
         state: [u128; 4],
     }
@@ -232,7 +234,7 @@ pub mod lcg {
                     (seed as u128) << 64 | seed as u128,
                     (seed as u128) << 64 | !seed as u128,
                     (!seed as u128) << 64 | seed as u128,
-                ]
+                ],
             }
         }
 
@@ -249,8 +251,10 @@ pub mod lcg {
             self.state[2] = self.state[2].wrapping_add(0x77421f2a59df2305739f337afcad9edb);
             self.state[3] = self.state[3].wrapping_mul(0xcdf30907584f7e1551c0667353108b63);
             self.state[3] = self.state[3].wrapping_add(0x935fec88eaba8c39e94503587c22ce99);
-            ((self.state[0] >> 64)as u64) ^ ((self.state[1] >> 64)as u64) ^ ((self.state[2] >> 64)as u64) ^ ((self.state[3] >> 64)as u64)
-
+            ((self.state[0] >> 64) as u64)
+                ^ ((self.state[1] >> 64) as u64)
+                ^ ((self.state[2] >> 64) as u64)
+                ^ ((self.state[3] >> 64) as u64)
         }
 
         fn advance(&mut self, delta: usize) {
@@ -261,14 +265,14 @@ pub mod lcg {
 
         fn reseed(&mut self, seed: u64) {
             self.state = [
-                    (seed as u128) << 64 | seed as u128,
-                    (seed as u128) << 64 | seed as u128,
-                    (seed as u128) << 64 | seed as u128,
-                    (seed as u128) << 64 | seed as u128,
-                ];
+                (seed as u128) << 64 | seed as u128,
+                (seed as u128) << 64 | seed as u128,
+                (seed as u128) << 64 | seed as u128,
+                (seed as u128) << 64 | seed as u128,
+            ];
         }
     }
-
+    #[derive(Debug, Copy, Clone)]
     pub struct ULSLCG512H {
         state: [u128; 4],
     }
@@ -281,7 +285,7 @@ pub mod lcg {
                     (seed as u128) << 64 | seed as u128,
                     (seed as u128) << 64 | !seed as u128,
                     (!seed as u128) << 64 | seed as u128,
-                ]
+                ],
             }
         }
 
@@ -298,8 +302,9 @@ pub mod lcg {
             self.state[2] = self.state[2].wrapping_add(0x2f18c679c54a581aef3f88efa973d2c9);
             self.state[3] = self.state[3].wrapping_mul(0xa7b5b12dc766a03cfdbaf54bacac8382);
             self.state[3] = self.state[3].wrapping_add(0xb12c82d5df1c4e33fd207ba107b9c620);
-            (self.state[0].wrapping_add(self.state[1].wrapping_add(self.state[2].wrapping_add(self.state[3]))) >> 64) as u64
-
+            (self.state[0].wrapping_add(
+                self.state[1].wrapping_add(self.state[2].wrapping_add(self.state[3])),
+            ) >> 64) as u64
         }
 
         fn advance(&mut self, delta: usize) {
@@ -310,11 +315,42 @@ pub mod lcg {
 
         fn reseed(&mut self, seed: u64) {
             self.state = [
-                    (seed as u128) << 64 | seed as u128,
-                    (seed as u128) << 64 | seed as u128,
-                    (seed as u128) << 64 | seed as u128,
-                    (seed as u128) << 64 | seed as u128,
-                ];
+                (seed as u128) << 64 | seed as u128,
+                (seed as u128) << 64 | seed as u128,
+                (seed as u128) << 64 | seed as u128,
+                (seed as u128) << 64 | seed as u128,
+            ];
+        }
+    }
+
+    #[derive(Debug, Copy, Clone)]
+    pub struct Lehmer64 {
+        state: u128,
+    }
+    impl RNG for Lehmer64 {
+        fn new(seed: u64) -> Self {
+            Lehmer64 {
+                state: (seed as u128) << 64 | seed as u128,
+            }
+        }
+
+        fn next_u32(&mut self) -> u32 {
+            self.next() as u32
+        }
+
+        fn next(&mut self) -> u64 {
+            self.state = self.state.wrapping_mul(0xda942042e4dd58b5);
+            (self.state >> 64) as u64
+        }
+
+        fn advance(&mut self, delta: usize) {
+            for _ in 0..delta {
+                let _ = self.next();
+            }
+        }
+
+        fn reseed(&mut self, seed: u64) {
+            self.state = (seed as u128) << 64 | seed as u128;
         }
     }
 }

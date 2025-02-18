@@ -107,6 +107,15 @@ Linear congruential generators.
 | State Size | 512 bits |
 | Supports | |
 
+
+| Lehmer64 |   |
+|---|---|
+| Speed | 250% |
+| Fails Tests | None |
+| Output per Step | 64 bits |
+| State Size | 128 bits |
+| Supports | |
+
 ## License
 
 Licensed under either of the following, at your option:

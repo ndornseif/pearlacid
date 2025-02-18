@@ -58,7 +58,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_size: usize, randomseeds: usize) {
 
 fn main() {
     let sample_exponent: usize = 30;
-    let mut r = rngs::lcg::ULSLCG512::new(0);
+    let mut r = rngs::lcg::Lehmer64::new(0);
     test_suite(&mut r, 1 << sample_exponent, 3);
     //let _ = stats::fill_test_image("testfiles/d.ppm", &mut r, 7680, 4320);
 }
