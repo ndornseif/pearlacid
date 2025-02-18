@@ -71,7 +71,7 @@ Based on the well-established xorshift architecture.
 ### lcg
 Linear congruential generators.
 
-| RANDU |   |
+| Randu |   |
 |---|---|
 | Speed | 170% |
 | Fails Tests | Chi², Spectral |
@@ -81,7 +81,7 @@ Linear congruential generators.
 
 
 
-| MMIX |   |
+| Mmix |   |
 |---|---|
 | Speed | 220% |
 | Fails Tests | None |
@@ -90,7 +90,7 @@ Linear congruential generators.
 | Supports | |
 
 
-| ULSLCG512 |   |
+| UlsLcg512 |   |
 |---|---|
 | Speed | 100% |
 | Fails Tests | None |
@@ -99,7 +99,7 @@ Linear congruential generators.
 | Supports | |
 
 
-| ULSLCG512H |   |
+| UlsLcg512H |   |
 |---|---|
 | Speed | 100% |
 | Fails Tests | None |

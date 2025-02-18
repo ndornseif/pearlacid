@@ -30,7 +30,6 @@ pub mod stream_nlarx {
     use super::RNG;
     const INITIAL_STATE: u64 = 0;
     const N_ROUNDS: usize = 6;
-    const XOR_CONST: u128 = 0x65dcfc916d8e80c9c3cdd6d59b50c964;
 
     #[derive(Debug, Copy, Clone)]
     pub struct StreamNLARXu128 {
@@ -99,9 +98,9 @@ pub mod xorshift {
         fn new(seed: u64) -> Self {
             XORShift128 {
                 state: [
-                    (seed & 0xFFFFFFFF) as u32,
+                    (seed & 0xffffffff) as u32,
                     (seed >> 32) as u32,
-                    (seed & 0xFFFFFFFF) as u32,
+                    (seed & 0xffffffff) as u32,
                     (seed >> 32) as u32,
                 ],
             }
@@ -151,13 +150,13 @@ pub mod lcg {
     /// The .next_u32() method uses two RANDU calls.
     /// the .next_small() method returns the reduced original output space.
     #[derive(Debug, Copy, Clone)]
-    pub struct RANDU {
+    pub struct Randu {
         state: u32,
     }
 
-    impl RNG for RANDU {
+    impl RNG for Randu {
         fn new(seed: u64) -> Self {
-            RANDU { state: seed as u32 }
+            Randu { state: seed as u32 }
         }
 
         fn next_u32(&mut self) -> u32 {
@@ -183,7 +182,7 @@ pub mod lcg {
             self.state = seed as u32;
         }
     }
-    impl RANDU {
+    impl Randu {
         /// Generate a number in the original reduced output space of 0 to 2**31 - 1.
         fn next_small(&mut self) -> u32 {
             self.state = (self.state * 65539) & 0x7fffffff;
@@ -192,13 +191,13 @@ pub mod lcg {
     }
     /// Originaly designed by Donald Knuth
     #[derive(Debug, Copy, Clone)]
-    pub struct MMIX {
+    pub struct Mmix {
         state: u64,
     }
 
-    impl RNG for MMIX {
+    impl RNG for Mmix {
         fn new(seed: u64) -> Self {
-            MMIX { state: seed }
+            Mmix { state: seed }
         }
 
         fn next_u32(&mut self) -> u32 {
@@ -222,13 +221,13 @@ pub mod lcg {
         }
     }
     #[derive(Debug, Copy, Clone)]
-    pub struct ULSLCG512 {
+    pub struct UlsLcg512 {
         state: [u128; 4],
     }
 
-    impl RNG for ULSLCG512 {
+    impl RNG for UlsLcg512 {
         fn new(seed: u64) -> Self {
-            ULSLCG512 {
+            UlsLcg512 {
                 state: [
                     (!seed as u128) << 64 | !seed as u128,
                     (seed as u128) << 64 | seed as u128,
@@ -265,21 +264,21 @@ pub mod lcg {
 
         fn reseed(&mut self, seed: u64) {
             self.state = [
+                (!seed as u128) << 64 | !seed as u128,
                 (seed as u128) << 64 | seed as u128,
-                (seed as u128) << 64 | seed as u128,
-                (seed as u128) << 64 | seed as u128,
-                (seed as u128) << 64 | seed as u128,
+                (seed as u128) << 64 | !seed as u128,
+                (!seed as u128) << 64 | seed as u128,
             ];
         }
     }
     #[derive(Debug, Copy, Clone)]
-    pub struct ULSLCG512H {
+    pub struct UlsLcg512H {
         state: [u128; 4],
     }
 
-    impl RNG for ULSLCG512H {
+    impl RNG for UlsLcg512H {
         fn new(seed: u64) -> Self {
-            ULSLCG512H {
+            UlsLcg512H {
                 state: [
                     (!seed as u128) << 64 | !seed as u128,
                     (seed as u128) << 64 | seed as u128,
@@ -315,10 +314,10 @@ pub mod lcg {
 
         fn reseed(&mut self, seed: u64) {
             self.state = [
+                (!seed as u128) << 64 | !seed as u128,
                 (seed as u128) << 64 | seed as u128,
-                (seed as u128) << 64 | seed as u128,
-                (seed as u128) << 64 | seed as u128,
-                (seed as u128) << 64 | seed as u128,
+                (seed as u128) << 64 | !seed as u128,
+                (!seed as u128) << 64 | seed as u128,
             ];
         }
     }

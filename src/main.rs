@@ -87,7 +87,7 @@ fn main() {
     const RANDOMSEEDS: usize = 4;
     let mut r = rngs::lcg::Lehmer64::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
-    let mut r = rngs::lcg::ULSLCG512::new(0);
+    let mut r = rngs::lcg::RANDU::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
     let mut r = rngs::lcg::MMIX::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
