@@ -58,10 +58,9 @@ pub mod stream_nlarx {
 
     impl RNG for StreamNLARXu128 {
         fn new(seed: u64) -> StreamNLARXu128 {
-            let nrng = StreamNLARXu128 {
+            StreamNLARXu128 {
                 state: (seed as u128) << 64 | INITIAL_STATE as u128,
-            };
-            nrng
+            }
         }
         fn advance(&mut self, delta: usize) {
             self.state = (self.state & 0xffffffffffffffff0000000000000000)
@@ -245,7 +244,7 @@ pub mod lcg {
             self.state[0] = self.state[0].wrapping_mul(0x59ca1b2888a0a80fc054cd25b1fde311);
             self.state[0] = self.state[0].wrapping_add(0xa53a3854d740d22b4802f2e6ea01e350);
             self.state[1] = self.state[1].wrapping_mul(0xade47f9859546ba094573e7c2194a93c);
-            self.state[1] = self.state[1].wrapping_add(0xc77A0728309148b95143795d657a29f2);
+            self.state[1] = self.state[1].wrapping_add(0xc77a0728309148b95143795d657a29f2);
             self.state[2] = self.state[2].wrapping_mul(0x85fec39e4833d57dd07f903f191ecfd3);
             self.state[2] = self.state[2].wrapping_add(0x77421f2a59df2305739f337afcad9edb);
             self.state[3] = self.state[3].wrapping_mul(0xcdf30907584f7e1551c0667353108b63);

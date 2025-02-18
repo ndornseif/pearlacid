@@ -24,7 +24,7 @@ pub fn count_bytes(sample: &Vec<u8>) -> [usize; 256] {
 }
 
 /// Generate 'sample size' u64s using the supplied rng.
-/// 	-> generates 'sample_size' * 8 bytes.
+///     -> generates 'sample_size' * 8 bytes.
 /// Return count of all possible bytes over the entire sample.
 pub fn check_byte_distribution(test_rng: &mut impl RNG, sample_size: usize) -> [usize; 256] {
     let mut counts: [usize; 256] = [0; 256];
@@ -38,7 +38,7 @@ pub fn check_byte_distribution(test_rng: &mut impl RNG, sample_size: usize) -> [
 }
 
 /// Generate 'sample size' u64s using the rand crate as a reference.
-/// 	-> generates 'sample_size' * 8 bytes.
+///     -> generates 'sample_size' * 8 bytes.
 /// Return count of all possible bytes over the entire sample.
 pub fn check_byte_distribution_reference(sample_size: usize) -> [usize; 256] {
     let mut counts: [usize; 256] = [0; 256];
@@ -52,7 +52,7 @@ pub fn check_byte_distribution_reference(sample_size: usize) -> [usize; 256] {
 }
 
 /// Generate 'sample size' u64s using the supplied rng.
-/// 	-> generates 'sample_size' * 8 bytes.
+///     -> generates 'sample_size' * 8 bytes.
 /// Write them out to the supplied file path.
 pub fn fill_test_file(
     file_path: &str,
@@ -63,7 +63,7 @@ pub fn fill_test_file(
     let mut writer = BufWriter::new(file);
     for _ in 0..sample_size {
         let sample = test_rng.next().to_le_bytes();
-        writer.write(&sample)?;
+        writer.write_all(&sample)?;
     }
     Ok(())
 }
@@ -76,19 +76,19 @@ pub fn fill_test_image(
     height: usize,
 ) -> std::io::Result<()> {
     let path = Path::new(file_path);
-    let file = File::create(&path)?;
+    let file = File::create(path)?;
     let mut writer = BufWriter::new(file);
     let header = format!("P6 {} {} 255\n", width, height);
-    writer.write(header.as_bytes())?;
+    writer.write_all(header.as_bytes())?;
     for _ in 0..height * width / 2 {
         let sample = test_rng.next().to_le_bytes();
-        writer.write(&sample[0..6])?;
+        writer.write_all(&sample[0..6])?;
     }
     Ok(())
 }
 
 /// Generate 'sample size' u64s using the supplied rng.
-/// 	-> generates 'sample_size' * 8 bytes.
+///     -> generates 'sample_size' * 8 bytes.
 /// Return chi squared value of the byte distribution.
 pub fn bytes_chi_squared_test(test_rng: &mut impl RNG, sample_size: usize) -> (f64, f64) {
     let distribution: [usize; 256] = check_byte_distribution(test_rng, sample_size);
@@ -102,7 +102,7 @@ pub fn bytes_chi_squared_test(test_rng: &mut impl RNG, sample_size: usize) -> (f
 }
 
 /// Generate 'sample size' u64s using rand crate as a reference.
-/// 	-> generates 'sample_size' * 8 bytes.
+///     -> generates 'sample_size' * 8 bytes.
 /// Return chi squared value of the byte distribution.
 pub fn bytes_chi_squared_test_reference(sample_size: usize) -> (f64, f64) {
     let distribution: [usize; 256] = check_byte_distribution_reference(sample_size);

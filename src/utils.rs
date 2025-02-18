@@ -28,14 +28,14 @@ pub fn create_ppm(
     file_path: &str,
     width: usize,
     height: usize,
-    image_data: &Vec<u8>,
+    image_data: &[u8],
 ) -> std::io::Result<()> {
     assert_eq!(image_data.len(), height * width * 3);
     let path = Path::new(file_path);
-    let mut file = File::create(&path)?;
+    let mut file = File::create(path)?;
     let header = format!("P6 {} {} 255\n", width, height);
-    file.write(header.as_bytes())?;
-    file.write(image_data)?;
+    file.write_all(header.as_bytes())?;
+    file.write_all(image_data)?;
     Ok(())
 }
 
@@ -44,14 +44,14 @@ pub fn create_ppm(
 pub fn format_byte_count(num_bytes: usize) -> String {
     // 2**30 = 1073741824
     if num_bytes > 1073741824 {
-        return format!("{:.2} GiB", (num_bytes as f64 / 1073741824.0));
+        format!("{:.2} GiB", (num_bytes as f64 / 1073741824.0))
     // 2**20 = 1048576
     } else if num_bytes > 1048576 {
-        return format!("{:.2} MiB", (num_bytes as f64 / 1048576.0));
+        format!("{:.2} MiB", (num_bytes as f64 / 1048576.0))
     // 2**10 = 1024
     } else if num_bytes > 1024 {
-        return format!("{:.2} KiB", (num_bytes as f64 / 1024.0));
+        format!("{:.2} KiB", (num_bytes as f64 / 1024.0))
     } else {
-        return format!("{:.2} B", num_bytes as f64);
+        format!("{:.2} B", num_bytes as f64)
     }
 }

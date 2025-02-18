@@ -1,5 +1,10 @@
+"""
+Copyright 2025 N. Dornseif
+
+Dual-licensed under Apache 2.0 and MIT terms.
+"""
+
 import random
-from typing import Union
 
 def random_constant(bits: int, count: int = 1) -> str:
 	constants = list()
