@@ -32,7 +32,6 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, randomseeds: usiz
     } else {
         1
     };
-
     println!(
         "Generating {} per test.",
         utils::format_byte_count(sample_size * 8)
@@ -100,27 +99,30 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, randomseeds: usiz
 }
 
 fn main() {
-    const TEST_SIZE_EXPONENT: usize = 30;
+    const TEST_SIZE_EXPONENT: usize = 28;
     const RANDOMSEEDS: usize = 4;
-    println!("Testing Lehmer64");
+    println!("\nTesting RijndaelStream");
+    let mut r = rngs::spn::RijndaelStream::new(0);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
+    println!("\nTesting Lehmer64");
     let mut r = rngs::lcg::Lehmer64::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
-    println!("Testing RANDU");
+    println!("\nTesting RANDU");
     let mut r = rngs::lcg::Randu::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
-    println!("Testing MMIX");
+    println!("\nTesting MMIX");
     let mut r = rngs::lcg::Mmix::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
-    println!("Testing UlsLcg512");
+    println!("\nTesting UlsLcg512");
     let mut r = rngs::lcg::UlsLcg512::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
-    println!("Testing UlsLcg512H");
+    println!("\nTesting UlsLcg512H");
     let mut r = rngs::lcg::UlsLcg512H::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
-    println!("Testing XORShift128");
+    println!("\nTesting XORShift128");
     let mut r = rngs::xorshift::XORShift128::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
-    println!("Testing StreamNLARXu128");
+    println!("\nTesting StreamNLARXu128");
     let mut r = rngs::stream_nlarx::StreamNLARXu128::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
 }

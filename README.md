@@ -69,13 +69,26 @@ Based on the well-established xorshift architecture.
 | State Size | 128 bits |
 | Supports | |
 
+
+### spn
+Substitution–permutation networks.
+
+| RijndaelStream |   |
+|---|---|
+| Speed | 15% |
+| Fails Tests | None |
+| Output per Step | 64 bits |
+| State Size | 128 bits |
+| Supports | `seek` |
+
+
 ### lcg
 Linear congruential generators.
 
 | Randu |   |
 |---|---|
 | Speed | 170% |
-| Fails Tests | Chi², Spectral |
+| Fails Tests | Bytes, Spectral, LZ-Dist |
 | Output per Step | 31 bits |
 | State Size | 32 bits |
 | Supports | `next_small` |
@@ -85,7 +98,7 @@ Linear congruential generators.
 | Mmix |   |
 |---|---|
 | Speed | 220% |
-| Fails Tests | None |
+| Fails Tests | Bytes |
 | Output per Step | 64 bits |
 | State Size | 64 bits |
 | Supports | |

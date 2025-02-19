@@ -353,3 +353,64 @@ pub mod lcg {
         }
     }
 }
+
+/// RNGs based on permutation substitution networks.
+pub mod spn {
+    use std::arch::x86_64::*;
+
+    use super::RNG;
+
+    /// Implementation is x86 architecture specific.
+    /// Will crash if x86 AES instruction set is not available.
+    pub struct RijndaelStream {
+        counter: u128,
+        key: [u8; 16],
+    }
+    impl RNG for RijndaelStream {
+        fn new(seed: u64) -> Self {
+            let mut key: [u8; 16] = [0; 16];
+            key[0..8].clone_from_slice(&seed.to_le_bytes());
+            key[8..16].clone_from_slice(&(!seed).to_le_bytes());
+            RijndaelStream { counter: 0, key }
+        }
+
+        fn next_u32(&mut self) -> u32 {
+            self.next() as u32
+        }
+
+        fn next(&mut self) -> u64 {
+            #![feature(stdarch)]
+            self.advance(1);
+
+            let mut encrypted = [0u8; 16];
+            unsafe {
+                // Load key and block into SIMD registers
+                let key = _mm_loadu_si128(self.key.as_ptr() as *const __m128i);
+                let mut block =
+                    _mm_loadu_si128(self.counter.to_le_bytes().as_ptr() as *const __m128i);
+
+                for _ in 0..4 {
+                    block = _mm_aesenc_si128(block, key);
+                }
+                _mm_storeu_si128(encrypted.as_mut_ptr() as *mut __m128i, block);
+            }
+            u128::from_le_bytes(encrypted) as u64
+        }
+
+        fn advance(&mut self, delta: usize) {
+            self.counter += delta as u128;
+        }
+
+        fn reseed(&mut self, seed: u64) {
+            let mut key: [u8; 16] = [0; 16];
+            key[0..8].clone_from_slice(&seed.to_le_bytes());
+            key[8..16].clone_from_slice(&(!seed).to_le_bytes());
+            self.key = key;
+        }
+    }
+    impl RijndaelStream {
+        pub fn seek(&mut self, counter: u64) {
+            self.counter = counter as u128;
+        }
+    }
+}
