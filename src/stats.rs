@@ -4,15 +4,18 @@
 
 //! Collection of methods for statistical analysis.
 
+//TODO:
+// Interesing tests:
+// - Seed output difference
+// - Runs Test (Wald-Wolfowitz)
+// - Birthday spacings test
+
 use std::{
-    fs::File,
-    io::{BufWriter, Write},
-    path::Path,
+    fs::File, i16, io::{BufWriter, Write}, path::Path
 };
 
-use statrs::distribution::{ChiSquared, ContinuousCDF};
-
 use crate::rngs::RNG;
+use statrs::distribution::{ChiSquared, ContinuousCDF};
 
 /// Generate 'sample size' u64s using the supplied rng.
 ///     -> generates 'sample_size' * 8 bytes.
@@ -53,7 +56,7 @@ pub fn fill_test_image(
 /// Generate 'sample size' u64s using the supplied rng.
 ///     -> generates 'sample_size' * 8 bytes.
 /// Return chi squared value of the byte distribution.
-pub fn bytes_chi_squared_test(test_rng: &mut impl RNG, sample_size: usize) -> (f64, f64) {
+pub fn byte_distribution_test(test_rng: &mut impl RNG, sample_size: usize) -> (f64, f64) {
     let mut counts: [usize; 256] = [0; 256];
     for _ in 0..sample_size {
         let sample = test_rng.next().to_le_bytes();
@@ -72,8 +75,8 @@ pub fn bytes_chi_squared_test(test_rng: &mut impl RNG, sample_size: usize) -> (f
 
 /// Generate 'sample size' u64s using rand crate as a reference.
 ///     -> generates 'sample_size' * 8 bytes.
-/// Return chi squared value of the byte distribution.
-pub fn bytes_chi_squared_test_reference(sample_size: usize) -> (f64, f64) {
+/// Return chi squared value and p of the byte distribution.
+pub fn byte_distribution_test_reference(sample_size: usize) -> (f64, f64) {
     let mut counts: [usize; 256] = [0; 256];
     for _ in 0..sample_size {
         let sample = rand::random::<u64>().to_le_bytes();
@@ -100,7 +103,7 @@ fn chi_squared_p_value(df: u32, chi_squared: f64) -> f64 {
 /// This is the reference test using the rand crate.
 ///     -> generates 'sample_size' * 8 bytes.
 /// Returns the average distance.
-pub fn leading_zeros_frequency_test_reference(sample_size: usize, zero_count: usize) -> f64 {
+pub fn leading_zeros_spacing_test_reference(sample_size: usize, zero_count: usize) -> f64 {
     let mut distances: Vec<usize> = vec![];
     let mask: u64 = u64::MAX >> (64 - zero_count);
     let mut current_distance: usize = 0;
@@ -140,4 +143,31 @@ pub fn leading_zeros_frequency_test(
     }
     let sum: f64 = distances.iter().fold(0.0, |acc, x| acc + *x as f64);
     sum / (distances.len() as f64)
+}
+
+/// Measures the difference between the number of ones and zeros generated.
+/// This is the reference test using the rand crate.
+///     -> generates 'sample_size' * 8 bytes.
+/// Returns the cummulative difference.
+pub fn monobit_test_reference(sample_size: usize) -> i64 {
+    let mut difference: i64 = 0;
+    for _ in 0..sample_size {
+        let sample = rand::random::<u64>();
+        difference += (sample.count_ones() as i64) - 32;
+    }
+    difference
+}
+
+
+/// Measures the difference between the number of ones and zeros generated.
+/// Using the supplied RNG.
+///     -> generates 'sample_size' * 8 bytes.
+/// Returns the cummulative difference.
+pub fn monobit_test(test_rng: &mut impl RNG, sample_size: usize) -> i64 {
+    let mut difference: i64 = 0;
+    for _ in 0..sample_size {
+        let sample = test_rng.next();
+        difference += (sample.count_ones() as i64) - 32;
+    }
+    difference
 }
