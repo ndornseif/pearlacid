@@ -56,11 +56,12 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, randomseeds: usiz
         avg_distance
     );
     let start = std::time::Instant::now();
-    let bit_difference = stats::monobit_test_reference(sample_size);
+    let (bit_difference, test_statistic) = stats::monobit_test_reference(sample_size);
     println!(
-        "Monobit: Time: {:?}    Bit difference: {:.0}",
+        "Monobit: Time: {:?}    Bit difference: {:.0}   p: {:.4}",
         start.elapsed(),
-        bit_difference
+        bit_difference,
+        test_statistic
     );
     let mut seeds: Vec<u64> = vec![0, 1, u64::MAX];
     for _ in 0..randomseeds {
@@ -88,11 +89,12 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, randomseeds: usiz
             avg_distance
         );
         let start = std::time::Instant::now();
-        let bit_difference = stats::monobit_test(test_rng, sample_size);
+        let (bit_difference, test_statistic) = stats::monobit_test(test_rng, sample_size);
         println!(
-            "Monobit: Time: {:?}    Bit difference: {:.0}",
+            "Monobit: Time: {:?}    Bit difference: {:.0}   p: {:.4}",
             start.elapsed(),
-            bit_difference
+            bit_difference,
+            test_statistic
         );
     }
 }

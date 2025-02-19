@@ -11,10 +11,10 @@
 // - Birthday spacings test
 
 use std::{
-    fs::File, i16, io::{BufWriter, Write}, path::Path
+    fs::File, io::{BufWriter, Write}, path::Path
 };
 
-use crate::rngs::RNG;
+use crate::{rngs::RNG, utils};
 use statrs::distribution::{ChiSquared, ContinuousCDF};
 
 /// Generate 'sample size' u64s using the supplied rng.
@@ -148,26 +148,28 @@ pub fn leading_zeros_frequency_test(
 /// Measures the difference between the number of ones and zeros generated.
 /// This is the reference test using the rand crate.
 ///     -> generates 'sample_size' * 8 bytes.
-/// Returns the cummulative difference.
-pub fn monobit_test_reference(sample_size: usize) -> i64 {
+/// Returns the cummulative difference, test statistic.
+pub fn monobit_test_reference(sample_size: usize) -> (i64, f64) {
     let mut difference: i64 = 0;
     for _ in 0..sample_size {
         let sample = rand::random::<u64>();
         difference += (sample.count_ones() as i64) - 32;
     }
-    difference
+    let p: f64 = statrs::function::erf::erfc((difference.abs() as f64 / f64::sqrt(sample_size as f64 * 64.0))* utils::INV_ROOT2);
+    (difference, p)
 }
 
 
 /// Measures the difference between the number of ones and zeros generated.
 /// Using the supplied RNG.
 ///     -> generates 'sample_size' * 8 bytes.
-/// Returns the cummulative difference.
-pub fn monobit_test(test_rng: &mut impl RNG, sample_size: usize) -> i64 {
+/// Returns the cummulative difference, test statistic.
+pub fn monobit_test(test_rng: &mut impl RNG, sample_size: usize) -> (i64, f64) {
     let mut difference: i64 = 0;
     for _ in 0..sample_size {
         let sample = test_rng.next();
         difference += (sample.count_ones() as i64) - 32;
     }
-    difference
+    let p: f64 = statrs::function::erf::erfc((difference.abs() as f64 / f64::sqrt(sample_size as f64 * 64.0)) * utils::INV_ROOT2);
+    (difference, p)
 }

@@ -6,19 +6,13 @@
 
 use std::{fs::File, io::Write, path::Path};
 
+pub const ROOT2: f64 = 1.4142135623730951;
+pub const INV_ROOT2: f64 = 0.7071067811865475;
+
 pub fn xor_in_place(a: &mut [u64], b: &[u64]) {
     for (b1, b2) in a.iter_mut().zip(b.iter()) {
         *b1 ^= *b2;
     }
-}
-
-/// Maps a u64 to the 0..1 range in f64.
-/// The destribution is uniform but only uses
-/// the lower 52 bits of the u64.
-/// Not all possible f64 in the output range are produced by this function.
-pub fn u64_to_double(int: u64) -> f64 {
-    let return_float = (int & 0x000fffffffffffff) | 0x3ff0000000000000;
-    f64::from_bits(return_float) - 1.0
 }
 
 /// Create 24-bit color .ppm image from byte vec.
