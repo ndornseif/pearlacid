@@ -54,8 +54,8 @@ Allows seeking to any position in the output stream with the `seek` method.
 |---|---|
 | Speed | 12% |
 | Fails Tests | None |
-| Bits per Step | 64 |
-| State Size | 128 |
+| Output per Step | 64 bits |
+| State Size | 128 bits |
 | Supports | `seek` |
 
 ### xorshift
