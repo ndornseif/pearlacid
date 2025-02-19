@@ -11,7 +11,9 @@
 // - Birthday spacings test
 
 use std::{
-    fs::File, io::{BufWriter, Write}, path::Path
+    fs::File,
+    io::{BufWriter, Write},
+    path::Path,
 };
 
 use crate::{rngs::RNG, utils};
@@ -155,10 +157,11 @@ pub fn monobit_test_reference(sample_size: usize) -> (i64, f64) {
         let sample = rand::random::<u64>();
         difference += (sample.count_ones() as i64) - 32;
     }
-    let p: f64 = statrs::function::erf::erfc((difference.abs() as f64 / f64::sqrt(sample_size as f64 * 64.0))* utils::INV_ROOT2);
+    let p: f64 = statrs::function::erf::erfc(
+        (difference.abs() as f64 / f64::sqrt(sample_size as f64 * 64.0)) * utils::INV_ROOT2,
+    );
     (difference, p)
 }
-
 
 /// Measures the difference between the number of ones and zeros generated.
 /// Using the supplied RNG.
@@ -170,6 +173,8 @@ pub fn monobit_test(test_rng: &mut impl RNG, sample_size: usize) -> (i64, f64) {
         let sample = test_rng.next();
         difference += (sample.count_ones() as i64) - 32;
     }
-    let p: f64 = statrs::function::erf::erfc((difference.abs() as f64 / f64::sqrt(sample_size as f64 * 64.0)) * utils::INV_ROOT2);
+    let p: f64 = statrs::function::erf::erfc(
+        (difference.abs() as f64 / f64::sqrt(sample_size as f64 * 64.0)) * utils::INV_ROOT2,
+    );
     (difference, p)
 }

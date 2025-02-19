@@ -6,7 +6,6 @@
 
 use std::{fs::File, io::Write, path::Path};
 
-pub const ROOT2: f64 = 1.4142135623730951;
 pub const INV_ROOT2: f64 = 0.7071067811865475;
 
 pub fn xor_in_place(a: &mut [u64], b: &[u64]) {
