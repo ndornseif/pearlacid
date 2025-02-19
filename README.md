@@ -13,6 +13,7 @@ All PRNGs implement the `RNG` trait, which includes the following methods:
 Initializes and returns a new RNG with the provided seed.
 If the internal state or seed handling does not support 64-bit seeds, the seed is truncated.
 This means that not all seeds generate unique streams for every RNG.
+Also note that some generators produce low quality output if the seed is zero.
 
 ##### `next_u32(&mut self) -> u32`
 Generates a `u32` and advances the internal state by one step.
