@@ -20,9 +20,10 @@ pub fn u64_to_double(int: u64) -> f64 {
 pub fn rs_random_int(test_rng: &mut impl RNG, lower: u64, upper: u64) -> u64 {
     assert!(upper > lower);
     let range: u64 = upper - lower;
+    let mask: u64 = u64::MAX >> (range - 1).leading_zeros();
     let mut rn;
     loop {
-        rn = test_rng.next() & (u64::MAX >> (range - 1).leading_zeros());
+        rn = test_rng.next() & mask;
         if rn < range {
             break;
         }
