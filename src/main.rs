@@ -36,32 +36,6 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, randomseeds: usiz
         "Generating {} per test.",
         utils::format_byte_count(sample_size * 8)
     );
-    println!("Running rand crate reference test.");
-    let start = std::time::Instant::now();
-    let (chi_squared, p) = stats::byte_distribution_test_reference(sample_size);
-    println!(
-        "Byte distribution: Time: {:?}    Chi2: {:.2}  p: {:.4}",
-        start.elapsed(),
-        chi_squared,
-        p
-    );
-    let start = std::time::Instant::now();
-    let avg_distance = stats::leading_zeros_spacing_test_reference(sample_size, leading_zeroes);
-    println!(
-        "LZ-Distance: Time: {:?}    Leading zeros: {:.2}   Dist:  Expected: {:.4}    Measured: {:.0}",
-        start.elapsed(),
-        leading_zeroes,
-        1 << leading_zeroes,
-        avg_distance
-    );
-    let start = std::time::Instant::now();
-    let (bit_difference, test_statistic) = stats::monobit_test_reference(sample_size);
-    println!(
-        "Monobit: Time: {:?}    Bit difference: {:.0}   p: {:.4}",
-        start.elapsed(),
-        bit_difference,
-        test_statistic
-    );
     let mut seeds: Vec<u64> = vec![0, 1, u64::MAX];
     for _ in 0..randomseeds {
         seeds.push(rand::random::<u64>());
@@ -99,8 +73,11 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, randomseeds: usiz
 }
 
 fn main() {
-    const TEST_SIZE_EXPONENT: usize = 28;
+    const TEST_SIZE_EXPONENT: usize = 26;
     const RANDOMSEEDS: usize = 4;
+    println!("\nTesting Reference");
+    let mut r = rngs::RefefenceRand::new(0);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);
     println!("\nTesting RijndaelStream");
     let mut r = rngs::spn::RijndaelStream::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, RANDOMSEEDS);

@@ -6,6 +6,8 @@
 //! All implement the RNG interface, some feature additional methods like:
 //! seek(delta: usize)
 
+use rand::{RngCore, SeedableRng};
+
 /// General trait for PRNGs
 pub trait RNG {
     /// Initialize with specified seed.
@@ -22,6 +24,35 @@ pub trait RNG {
     fn advance(&mut self, delta: usize);
     /// Reset to inital state, equivalent to repalcing with ::new(seed).
     fn reseed(&mut self, seed: u64);
+}
+
+
+pub struct RefefenceRand {
+    rng: rand::rngs::StdRng
+}
+
+impl RNG for RefefenceRand {
+    fn new(seed: u64) -> Self {
+        RefefenceRand {rng: rand::rngs::StdRng::seed_from_u64(seed)}
+    }
+
+    fn next_u32(&mut self) -> u32 {
+        self.rng.next_u32()
+    }
+
+    fn next(&mut self) -> u64 {
+        self.rng.next_u64()
+    }
+
+    fn advance(&mut self, delta: usize) {
+        for _ in 0..delta {
+            let _ = self.next();
+        }
+    }
+
+    fn reseed(&mut self, seed: u64) {
+        self.rng = rand::rngs::StdRng::seed_from_u64(seed);
+    }
 }
 
 /// Steam cipher based, add–rotate–XOR PRNG with non linear step.
@@ -98,9 +129,9 @@ pub mod xorshift {
         fn new(seed: u64) -> Self {
             XORShift128 {
                 state: [
-                    (seed & 0xffffffff) as u32,
+                    seed as u32,
                     (seed >> 32) as u32,
-                    (seed & 0xffffffff) as u32,
+                    seed as u32,
                     (seed >> 32) as u32,
                 ],
             }
