@@ -149,7 +149,7 @@ pub fn u64_block_bit_frequency_test(test_rng: &mut impl RNG, sample_size: usize)
 pub fn runs_test(test_rng: &mut impl RNG, sample_size: usize, excess_ones: i64) -> (u64, f64) {
     let mut runs: u64 = 0;
     // This sometimes introduces a off by one error
-    // If the first bit is a 1. 
+    // If the first bit is a 1.
     // Considerd acceptable error to save additional complexitiy and execution time.
     let mut lastbit: u64 = 0;
     for _ in 0..sample_size {
@@ -164,6 +164,9 @@ pub fn runs_test(test_rng: &mut impl RNG, sample_size: usize, excess_ones: i64) 
     }
     let num_bits: f64 = sample_size as f64 * 64.0;
     let ones_ratio: f64 = ((num_bits / 2.0) + excess_ones as f64) / num_bits;
-    let p: f64 = statrs::function::erf::erfc(((runs as f64) - (2.0 * ones_ratio * num_bits * (1.0 - ones_ratio))).abs()/ (2.0 * f64::sqrt(2.0 * num_bits) * ones_ratio * (1.0 - ones_ratio)));
+    let p: f64 = statrs::function::erf::erfc(
+        ((runs as f64) - (2.0 * ones_ratio * num_bits * (1.0 - ones_ratio))).abs()
+            / (2.0 * f64::sqrt(2.0 * num_bits) * ones_ratio * (1.0 - ones_ratio)),
+    );
     (runs, p)
 }
