@@ -64,8 +64,9 @@ fn chi_squared_p_value(df: u32, chi_squared: f64) -> f64 {
 
 
 /// Generate 'sample size' u64s using the supplied rng.
+/// Measures the distribution among the bytes.
 ///     -> generates 'sample_size' * 8 bytes.
-/// Return chi squared value of the byte distribution.
+/// Returns chi2 statistic, p value
 pub fn byte_distribution_test(test_rng: &mut impl RNG, sample_size: usize) -> (f64, f64) {
     let mut counts: [usize; 256] = [0; 256];
     for _ in 0..sample_size {
@@ -109,9 +110,9 @@ pub fn leading_zeros_frequency_test(
 }
 
 /// Measures the difference between the number of ones and zeros generated.
-/// Using the supplied RNG.
+/// NIST Special Publication 800-22 Test 2.1
 ///     -> generates 'sample_size' * 8 bytes.
-/// Returns the cummulative difference, test statistic.
+/// Returns the cummulative difference, p value.
 pub fn monobit_test(test_rng: &mut impl RNG, sample_size: usize) -> (i64, f64) {
     let mut difference: i64 = 0;
     for _ in 0..sample_size {
@@ -122,4 +123,22 @@ pub fn monobit_test(test_rng: &mut impl RNG, sample_size: usize) -> (i64, f64) {
         (difference.abs() as f64 / f64::sqrt(sample_size as f64 * 64.0)) * utils::INV_ROOT2,
     );
     (difference, p)
+}
+
+
+/// Measures the ratio of ones and zeroes in each u64
+/// NIST Special Publication 800-22 Test 2.2
+///     -> generates 'sample_size' * 8 bytes.
+/// Returns chi2 statistic, p value
+pub fn u64_block_bit_frequency_test(test_rng: &mut impl RNG, sample_size: usize) -> (f64, f64) {
+    let mut chi_squared: f64 = 0.0;
+    let expected: f64 = 0.5;
+    for _ in 0..sample_size {
+        let sample = test_rng.next();
+        chi_squared += ((sample.count_ones() as f64) / 64.0 - expected).powi(2);
+    }
+    chi_squared *= 4.0 * 64.0;
+    let p: f64 = statrs::function::gamma::checked_gamma_lr((sample_size as f64) / 2.0, chi_squared / 2.0).unwrap();
+    (chi_squared, p)
+
 }
