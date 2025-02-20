@@ -87,6 +87,8 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
         test_rng.reseed(*seed);
         let speed: f64 = stats::speed_test(test_rng, sample_size);
         // Relative speed compared to a reference speed of 3.78 GiB/s
+        // The reference speed is the speed the rand crate generator runs
+        // on a AMD Ryzen 7 5800X
         let rel_speed: f64 = (speed / (3.78 * ((1 << 30) as f64))) * 100.0;
         println!(
             "Speed: {}/s  ({:.4}%)",
