@@ -88,7 +88,7 @@ Linear congruential generators.
 | Randu |   |
 |---|---|
 | Speed | 160% |
-| Fails Tests | Bytes, Spectral, LZ-Dist, U64 blocks |
+| Fails Tests | Bytes, Spectral, LZ-Space, Blocks, Runs, Mono |
 | Output per Step | 31 bits |
 | State Size | 32 bits |
 | Supports | `next_small` |
@@ -129,6 +129,42 @@ Linear congruential generators.
 | Output per Step | 64 bits |
 | State Size | 128 bits |
 | Supports | |
+
+## Tests
+
+### Speed
+Measures the absolute speed in bytes/s and the relative speed compared to a reference speed of 3.78 GiB/s.
+The reference speed is the speed at which the rand crate generator runs on an AMD Ryzen 7 5800X.
+
+### Monobit
+Shorthand: Mono   
+Measures the cumulative difference between the number of ones and zeroes generated over the entire bitstream.
+A positive value indicates an excess of ones.
+Based on NIST Special Publication 800-22 Test 2.1.
+
+### Block bit frequency
+Shorthand: Blocks    
+Evaluates the ratio of ones and zeroes in every 64-bit block produced by the generator.
+Based on NIST Special Publication 800-22 Test 2.2.
+Calculates the p-value based on the chi² statistic.
+
+### Runs
+Shorthand: Runs   
+Measures the number of uninterrupted 'runs' of ones or zeroes in the bytestream.
+Based on NIST Special Publication 800-22 Test 2.3.
+This is a particularly slow test, as every bit needs to be evaluated individually.
+
+### Leading zeroes spacing
+Shorthand: LZ-Space    
+Measures the average distance between blocks of 64 bits that contain at least n leading zeroes.
+n is chosen by default so that the expected value for the number of blocks found is 4096.
+TODO: Calculate a proper p-value for this test.
+Currently, it only returns the average distance. Comparison of measured distances to the expected exponential distribution is possible.
+
+### Byte frequency
+Shorthand: Bytes   
+Measures the occurrences of the 256 possible byte values in the output stream, splitting each 64-bit output block into 8 bytes.
+Calculates the p-value based on the chi² statistic.
 
 ## License
 
