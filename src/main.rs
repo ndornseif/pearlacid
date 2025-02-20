@@ -24,7 +24,7 @@ macro_rules! time_it {
 /// Perform performance tests for supplied RNGs.
 /// Performs all tests using any of the supplied seeds.
 /// Runs: Byte distribution, LZ-Distance, Monobit, U64 blocks.
-fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &Vec<u64>) {
+fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
     let sample_size: usize = 1 << sample_exponent;
     let leading_zeroes: usize = if sample_exponent > 14 {
         sample_exponent - 14
@@ -84,11 +84,20 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &Vec<u64>)
             chi_squared,
             p
         );
+        test_rng.reseed(*seed);
+        let speed: f64 = stats::speed_test(test_rng, sample_size);
+        // Relative speed compared to a reference speed of 3.78 GiB/s
+        let rel_speed: f64 = (speed / (3.78 * ((1 << 30) as f64))) * 100.0;
+        println!(
+            "Speed: {}/s  ({:.4}%)",
+            utils::format_byte_count(speed as usize),
+            rel_speed
+        );
     }
 }
 
 fn main() {
-    const TEST_SIZE_EXPONENT: usize = 26;
+    const TEST_SIZE_EXPONENT: usize = 27;
     const RANDOMSEEDS: usize = 4;
     let mut seeds: Vec<u64> = vec![0, 1, u64::MAX];
     for _ in 0..RANDOMSEEDS {

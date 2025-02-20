@@ -170,3 +170,15 @@ pub fn runs_test(test_rng: &mut impl RNG, sample_size: usize, excess_ones: i64) 
     );
     (runs, p)
 }
+
+/// Measures the time taken to generate the specified amount of samples.
+/// Returns RNG speed in bytes per second.
+pub fn speed_test(test_rng: &mut impl RNG, sample_size: usize) -> f64 {
+    let start = std::time::Instant::now();
+    for _ in 0..sample_size {
+        let sample = test_rng.next();
+        std::hint::black_box(sample);
+    }
+    let timer = start.elapsed();
+    ((sample_size as f64) * 8.0) / ((timer.as_nanos() as f64) / 1e9)
+}
