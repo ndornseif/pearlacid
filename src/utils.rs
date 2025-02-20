@@ -36,13 +36,13 @@ pub fn create_ppm(
 /// e.g. 1048576 is 1 MiB
 pub fn format_byte_count(num_bytes: usize) -> String {
     // 2**30 = 1073741824
-    if num_bytes > 1073741824 {
+    if num_bytes >= 1073741824 {
         format!("{:.2} GiB", (num_bytes as f64 / 1073741824.0))
     // 2**20 = 1048576
-    } else if num_bytes > 1048576 {
+    } else if num_bytes >= 1048576 {
         format!("{:.2} MiB", (num_bytes as f64 / 1048576.0))
     // 2**10 = 1024
-    } else if num_bytes > 1024 {
+    } else if num_bytes >= 1024 {
         format!("{:.2} KiB", (num_bytes as f64 / 1024.0))
     } else {
         format!("{:.2} B", num_bytes as f64)
