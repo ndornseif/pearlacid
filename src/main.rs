@@ -41,7 +41,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
         let start = std::time::Instant::now();
         let (chi_squared, p) = stats::byte_distribution_test(test_rng, sample_size);
         println!(
-            "Byte distribution: Time: {:?}    Chi2: {:.2}  p: {:.4}",
+            "Bytes: Time: {:?}    Chi2: {:.2}  p: {:.4}",
             start.elapsed(),
             chi_squared,
             p
@@ -51,7 +51,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
         let avg_distance =
             stats::leading_zeros_frequency_test(test_rng, sample_size, leading_zeroes);
         println!(
-            "LZ-Distance: Time: {:?}    Leading zeros: {:.2}   Dist:  Expected: {:.4}    Measured: {:.0}",
+            "LZ-Space: Time: {:?}    Leading zeros: {:.2}   Dist:  Expected: {:.4}    Measured: {:.0}",
             start.elapsed(),
             leading_zeroes,
             1 << leading_zeroes,
@@ -61,7 +61,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
         let start = std::time::Instant::now();
         let (bit_difference, p) = stats::monobit_test(test_rng, sample_size);
         println!(
-            "Monobit: Time: {:?}    Bit difference: {:.0}   p: {:.4}",
+            "Mono: Time: {:?}    Bit difference: {:.0}   p: {:.4}",
             start.elapsed(),
             bit_difference,
             p
@@ -79,7 +79,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
         let start = std::time::Instant::now();
         let (chi_squared, p) = stats::u64_block_bit_frequency_test(test_rng, sample_size);
         println!(
-            "U64 Blocks: Time: {:?}    Chi2: {:.0}   p: {:.4}",
+            "Blocks: Time: {:?}    Chi2: {:.0}   p: {:.4}",
             start.elapsed(),
             chi_squared,
             p
@@ -99,7 +99,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
 }
 
 fn main() {
-    const TEST_SIZE_EXPONENT: usize = 27;
+    const TEST_SIZE_EXPONENT: usize = 30;
     const RANDOMSEEDS: usize = 4;
     let mut seeds: Vec<u64> = vec![0, 1, u64::MAX];
     for _ in 0..RANDOMSEEDS {
