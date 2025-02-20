@@ -52,7 +52,7 @@ Allows seeking to any position in the output stream with the `seek` method.
 
 | StreamNLARXu128 |   |
 |---|---|
-| Speed | 12% |
+| Speed | 10% |
 | Fails Tests | None |
 | Output per Step | 64 bits |
 | State Size | 128 bits |
@@ -63,7 +63,7 @@ Based on the well-established xorshift architecture.
 
 | XORShift128 |   |
 |---|---|
-| Speed | 170% |
+| Speed | 160% |
 | Fails Tests | None |
 | Output per Step | 32 bits |
 | State Size | 128 bits |
@@ -75,7 +75,7 @@ Substitution–permutation networks.
 
 | RijndaelStream |   |
 |---|---|
-| Speed | 15% |
+| Speed | 10% |
 | Fails Tests | None |
 | Output per Step | 64 bits |
 | State Size | 128 bits |
@@ -87,7 +87,7 @@ Linear congruential generators.
 
 | Randu |   |
 |---|---|
-| Speed | 170% |
+| Speed | 160% |
 | Fails Tests | Bytes, Spectral, LZ-Dist, U64 blocks |
 | Output per Step | 31 bits |
 | State Size | 32 bits |
@@ -97,7 +97,7 @@ Linear congruential generators.
 
 | Mmix |   |
 |---|---|
-| Speed | 220% |
+| Speed | 240% |
 | Fails Tests | Bytes |
 | Output per Step | 64 bits |
 | State Size | 64 bits |
@@ -106,7 +106,7 @@ Linear congruential generators.
 
 | UlsLcg512 |   |
 |---|---|
-| Speed | 100% |
+| Speed | 50% |
 | Fails Tests | None |
 | Output per Step | 64 bits |
 | State Size | 512 bits |
@@ -115,7 +115,7 @@ Linear congruential generators.
 
 | UlsLcg512H |   |
 |---|---|
-| Speed | 100% |
+| Speed | 45% |
 | Fails Tests | None |
 | Output per Step | 64 bits |
 | State Size | 512 bits |
@@ -124,7 +124,7 @@ Linear congruential generators.
 
 | Lehmer64 |   |
 |---|---|
-| Speed | 250% |
+| Speed | 240% |
 | Fails Tests | None |
 | Output per Step | 64 bits |
 | State Size | 128 bits |
