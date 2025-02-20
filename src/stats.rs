@@ -10,6 +10,7 @@
 // - Runs Test (Wald-Wolfowitz)
 // - Birthday spacings test
 
+use core::f64;
 use std::{
     fs::File,
     io::{BufWriter, Write},
@@ -55,13 +56,11 @@ pub fn fill_test_image(
     Ok(())
 }
 
-
 /// Get p value for given degrees of freedom and chi squared value.
 fn chi_squared_p_value(df: u32, chi_squared: f64) -> f64 {
     let chi_squared_dist = ChiSquared::new(df as f64).unwrap();
     chi_squared_dist.cdf(chi_squared)
 }
-
 
 /// Generate 'sample size' u64s using the supplied rng.
 /// Measures the distribution among the bytes.
@@ -125,7 +124,6 @@ pub fn monobit_test(test_rng: &mut impl RNG, sample_size: usize) -> (i64, f64) {
     (difference, p)
 }
 
-
 /// Measures the ratio of ones and zeroes in each u64
 /// NIST Special Publication 800-22 Test 2.2
 ///     -> generates 'sample_size' * 8 bytes.
@@ -138,7 +136,34 @@ pub fn u64_block_bit_frequency_test(test_rng: &mut impl RNG, sample_size: usize)
         chi_squared += ((sample.count_ones() as f64) / 64.0 - expected).powi(2);
     }
     chi_squared *= 4.0 * 64.0;
-    let p: f64 = statrs::function::gamma::checked_gamma_lr((sample_size as f64) / 2.0, chi_squared / 2.0).unwrap();
+    let p: f64 =
+        statrs::function::gamma::checked_gamma_lr((sample_size as f64) / 2.0, chi_squared / 2.0)
+            .unwrap();
     (chi_squared, p)
+}
 
+/// Meansures the number of unintterupted sequence of ones/zeroes.
+/// NIST Special Publication 800-22 Test 2.3
+///     -> generates 'sample_size' * 8 bytes.
+/// Returns number of runs, p value
+pub fn runs_test(test_rng: &mut impl RNG, sample_size: usize, excess_ones: i64) -> (u64, f64) {
+    let mut runs: u64 = 0;
+    // This sometimes introduces a off by one error
+    // If the first bit is a 1. 
+    // Considerd acceptable error to save additional complexitiy and execution time.
+    let mut lastbit: u64 = 0;
+    for _ in 0..sample_size {
+        let sample = test_rng.next();
+        for bit in 0..64 {
+            let current_bit: u64 = (sample >> bit) & 1;
+            if current_bit != lastbit {
+                runs += 1;
+            }
+            lastbit = current_bit;
+        }
+    }
+    let num_bits: f64 = sample_size as f64 * 64.0;
+    let ones_ratio: f64 = ((num_bits / 2.0) + excess_ones as f64) / num_bits;
+    let p: f64 = statrs::function::erf::erfc(((runs as f64) - (2.0 * ones_ratio * num_bits * (1.0 - ones_ratio))).abs()/ (2.0 * f64::sqrt(2.0 * num_bits) * ones_ratio * (1.0 - ones_ratio)));
+    (runs, p)
 }

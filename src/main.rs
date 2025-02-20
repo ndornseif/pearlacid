@@ -4,12 +4,12 @@
 
 //! Collection of PRNGS and methods for statistical analysis.
 
-#![allow(dead_code, unused_macros)]
+#![allow(unused_macros)]
 
 pub mod conditioning;
 pub mod rngs;
 pub mod stats;
-mod utils;
+pub mod utils;
 
 use rngs::RNG;
 
@@ -24,7 +24,7 @@ macro_rules! time_it {
 /// Perform performance tests for supplied RNGs.
 /// Performs all tests using any of the supplied seeds.
 /// Runs: Byte distribution, LZ-Distance, Monobit, U64 blocks.
-fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: Vec<u64>) {
+fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &Vec<u64>) {
     let sample_size: usize = 1 << sample_exponent;
     let leading_zeroes: usize = if sample_exponent > 14 {
         sample_exponent - 14
@@ -46,6 +46,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: Vec<u64>) 
             chi_squared,
             p
         );
+        test_rng.reseed(*seed);
         let start = std::time::Instant::now();
         let avg_distance =
             stats::leading_zeros_frequency_test(test_rng, sample_size, leading_zeroes);
@@ -56,6 +57,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: Vec<u64>) 
             1 << leading_zeroes,
             avg_distance
         );
+        test_rng.reseed(*seed);
         let start = std::time::Instant::now();
         let (bit_difference, p) = stats::monobit_test(test_rng, sample_size);
         println!(
@@ -64,6 +66,16 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: Vec<u64>) 
             bit_difference,
             p
         );
+        test_rng.reseed(*seed);
+        let start = std::time::Instant::now();
+        let (runs, p) = stats::runs_test(test_rng, sample_size, bit_difference);
+        println!(
+            "Runs: Time: {:?}    Runs count: {:.0}   p: {:.4}",
+            start.elapsed(),
+            runs,
+            p
+        );
+        test_rng.reseed(*seed);
         let start = std::time::Instant::now();
         let (chi_squared, p) = stats::u64_block_bit_frequency_test(test_rng, sample_size);
         println!(
@@ -72,7 +84,6 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: Vec<u64>) 
             chi_squared,
             p
         );
-
     }
 }
 
@@ -85,29 +96,29 @@ fn main() {
     }
     println!("\nTesting Reference");
     let mut r = rngs::RefefenceRand::new(0);
-    test_suite(&mut r, TEST_SIZE_EXPONENT, seeds);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, &seeds);
     println!("\nTesting RijndaelStream");
     let mut r = rngs::spn::RijndaelStream::new(0);
-    test_suite(&mut r, TEST_SIZE_EXPONENT, seeds);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, &seeds);
     println!("\nTesting Lehmer64");
     let mut r = rngs::lcg::Lehmer64::new(0);
-    test_suite(&mut r, TEST_SIZE_EXPONENT, seeds);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, &seeds);
     println!("\nTesting RANDU");
     let mut r = rngs::lcg::Randu::new(0);
-    test_suite(&mut r, TEST_SIZE_EXPONENT, seeds);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, &seeds);
     println!("\nTesting MMIX");
     let mut r = rngs::lcg::Mmix::new(0);
-    test_suite(&mut r, TEST_SIZE_EXPONENT, seeds);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, &seeds);
     println!("\nTesting UlsLcg512");
     let mut r = rngs::lcg::UlsLcg512::new(0);
-    test_suite(&mut r, TEST_SIZE_EXPONENT, seeds);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, &seeds);
     println!("\nTesting UlsLcg512H");
     let mut r = rngs::lcg::UlsLcg512H::new(0);
-    test_suite(&mut r, TEST_SIZE_EXPONENT, seeds);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, &seeds);
     println!("\nTesting XORShift128");
     let mut r = rngs::xorshift::XORShift128::new(0);
-    test_suite(&mut r, TEST_SIZE_EXPONENT, seeds);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, &seeds);
     println!("\nTesting StreamNLARXu128");
     let mut r = rngs::stream_nlarx::StreamNLARXu128::new(0);
-    test_suite(&mut r, TEST_SIZE_EXPONENT, seeds);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, &seeds);
 }
