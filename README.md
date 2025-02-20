@@ -88,7 +88,7 @@ Linear congruential generators.
 | Randu |   |
 |---|---|
 | Speed | 170% |
-| Fails Tests | Bytes, Spectral, LZ-Dist |
+| Fails Tests | Bytes, Spectral, LZ-Dist, U64 blocks |
 | Output per Step | 31 bits |
 | State Size | 32 bits |
 | Supports | `next_small` |
