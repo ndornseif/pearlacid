@@ -146,7 +146,7 @@ Based on NIST Special Publication 800-22 Test 2.1.
 Shorthand: Blocks    
 Evaluates the ratio of ones and zeroes in every 64-bit block produced by the generator.
 Based on NIST Special Publication 800-22 Test 2.2.
-Calculates the p-value based on the chi² statistic.
+Calculates the p-value based on the χ² statistic.
 
 ### Runs
 Shorthand: Runs   
@@ -163,7 +163,7 @@ Currently, it only returns the average distance. Comparison of measured distance
 ### Byte frequency
 Shorthand: Bytes   
 Measures the occurrences of the 256 possible byte values in the output stream, splitting each 64-bit output block into 8 bytes.
-Calculates the p-value based on the chi² statistic.
+Calculates the p-value based on the χ² statistic.
 
 ## License
 
