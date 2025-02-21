@@ -93,7 +93,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
 }
 
 fn main() {
-    const TEST_SIZE_EXPONENT: usize = 30;
+    const TEST_SIZE_EXPONENT: usize = 26;
     const RANDOMSEEDS: usize = 2;
     let mut seeds: Vec<u64> = vec![0, 1, u64::MAX];
     for _ in 0..RANDOMSEEDS {

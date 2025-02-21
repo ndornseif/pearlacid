@@ -48,7 +48,10 @@ pub fn generate_test_data(test_rng: &mut impl RNG, sample_size: usize) -> (Vec<u
         testdata.push(test_rng.next());
     }
     let timer = start.elapsed();
-    (testdata,  ((sample_size as f64) * 8.0) / ((timer.as_nanos() as f64) / 1e9))
+    (
+        testdata,
+        ((sample_size as f64) * 8.0) / ((timer.as_nanos() as f64) / 1e9),
+    )
 }
 
 /// Generate a ppm image and fill it with random data from supplied RNG.
