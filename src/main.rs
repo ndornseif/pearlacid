@@ -103,12 +103,11 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
 fn main() {
     let start = std::time::Instant::now();
     const TEST_SIZE_EXPONENT: usize = 28;
-    const RANDOMSEEDS: usize = 0;
+    const RANDOMSEEDS: usize = 2;
     let mut seeds: Vec<u64> = vec![0, 1, u64::MAX];
     for _ in 0..RANDOMSEEDS {
         seeds.push(rand::random::<u64>());
     }
-    let seeds: Vec<u64> = vec![1];
     println!("\nTesting Reference");
     let mut r = rngs::RefefenceRand::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, &seeds);
