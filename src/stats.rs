@@ -39,6 +39,8 @@ pub fn fill_test_file(
 
 /// Generate a vector of lenght 'sample_size'
 /// filled with u64 generated using the supplied RNG.
+/// Measures the time taken to generate the specified amount of samples.
+/// Returns RNG speed in bytes per second.
 pub fn generate_test_data(test_rng: &mut impl RNG, sample_size: usize) -> (Vec<u64>, f64) {
     let mut testdata: Vec<u64> = vec![];
     let start = std::time::Instant::now();
