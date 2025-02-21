@@ -152,7 +152,6 @@ Calculates the p-value based on the chi² statistic.
 Shorthand: Runs   
 Measures the number of uninterrupted 'runs' of ones or zeroes in the bitstream.
 Based on NIST Special Publication 800-22 Test 2.3.
-This is a particularly slow test, as every bit needs to be evaluated individually.
 
 ### Leading zeroes spacing
 Shorthand: LZ-Space    
