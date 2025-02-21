@@ -133,7 +133,7 @@ Linear congruential generators.
 ## Tests
 
 ### Speed
-Measures the absolute speed in bytes/s and the relative speed compared to a reference speed of 3.78 GiB/s.
+Measures the absolute speed in bytes/s and the relative speed compared to the reference speed.
 The reference speed is the speed at which the rand crate generator runs on an AMD Ryzen 7 5800X.
 
 ### Monobit
