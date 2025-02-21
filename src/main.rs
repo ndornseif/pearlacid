@@ -36,11 +36,17 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
 
         println!("Testing for seed: {:#01x}", seed);
         let start = std::time::Instant::now();
-        let testdata = stats::generate_test_data(test_rng, sample_size);
+        let (testdata, speed) = stats::generate_test_data(test_rng, sample_size);
+        // Relative speed compared to a reference speed of 3.78 GiB/s
+        // The reference speed is the speed the rand crate generator runs
+        // on a AMD Ryzen 7 5800X
+        let rel_speed: f64 = (speed / (3.78 * ((1 << 30) as f64))) * 100.0;
         println!(
-            "Generated {} test data in {:?}.",
+            "Generated {} test data in {:?}. (Speed: {}/s  ({:.4}%))",
             utils::format_byte_count(sample_size * 8),
-            start.elapsed()
+            start.elapsed(),
+            utils::format_byte_count(speed as usize),
+            rel_speed
         );
         let start = std::time::Instant::now();
         let (chi_squared, p) = stats::byte_distribution_test(&testdata);
@@ -83,22 +89,11 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
             chi_squared,
             p
         );
-        test_rng.reseed(*seed);
-        let speed: f64 = stats::speed_test(test_rng, sample_size);
-        // Relative speed compared to a reference speed of 3.78 GiB/s
-        // The reference speed is the speed the rand crate generator runs
-        // on a AMD Ryzen 7 5800X
-        let rel_speed: f64 = (speed / (3.78 * ((1 << 30) as f64))) * 100.0;
-        println!(
-            "Speed: {}/s  ({:.4}%)",
-            utils::format_byte_count(speed as usize),
-            rel_speed
-        );
     }
 }
 
 fn main() {
-    const TEST_SIZE_EXPONENT: usize = 32;
+    const TEST_SIZE_EXPONENT: usize = 30;
     const RANDOMSEEDS: usize = 2;
     let mut seeds: Vec<u64> = vec![0, 1, u64::MAX];
     for _ in 0..RANDOMSEEDS {
