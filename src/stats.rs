@@ -188,7 +188,7 @@ pub fn longest_ones_run(test_data: &[u64]) -> (f64, f64) {
     // These constants are taken form NIST 800-22
     // But actually apply for a block size of 10.000-bits.
     // TODO: Recalculate these.
-    const PI_TABLE: [f64;7] = [0.0882, 0.2092, 0.2483, 0.1933, 0.1208, 0.0675, 0.0727];
+    const PI_TABLE: [f64; 7] = [0.0882, 0.2092, 0.2483, 0.1933, 0.1208, 0.0675, 0.0727];
     const K: usize = 6;
     const N: f64 = 75.0;
     let mut last_bit = 0;
@@ -233,10 +233,11 @@ pub fn longest_ones_run(test_data: &[u64]) -> (f64, f64) {
         }
     }
     let mut chi_squared: f64 = 0.0;
-    println!("{:?}",bins);
+    println!("{:?}", bins);
     for i in 0..=K {
-        chi_squared += (bins[i]- N * PI_TABLE[i]).powi(2) / (N * PI_TABLE[i])
+        chi_squared += (bins[i] - N * PI_TABLE[i]).powi(2) / (N * PI_TABLE[i])
     }
-    let p: f64 = statrs::function::gamma::checked_gamma_lr(K as f64 /2.0,chi_squared/2.0).unwrap_or(0.0);
+    let p: f64 =
+        statrs::function::gamma::checked_gamma_lr(K as f64 / 2.0, chi_squared / 2.0).unwrap_or(0.0);
     (chi_squared, p)
 }
