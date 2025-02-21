@@ -489,7 +489,7 @@ pub mod testgens {
     }
 
     pub struct AlternatingBlocks {
-        state: u64
+        state: u64,
     }
     impl RNG for AlternatingBlocks {
         fn new(_seed: u64) -> Self {
@@ -507,12 +507,11 @@ pub mod testgens {
 
         fn advance(&mut self, delta: usize) {
             if delta & 1 == 1 {
-                self.state = !self.state;            
+                self.state = !self.state;
             }
         }
 
-        fn reseed(&mut self, _seed: u64) {
-        }
+        fn reseed(&mut self, _seed: u64) {}
     }
 
     pub struct AlternatingBytes {}

@@ -144,7 +144,7 @@ pub fn u64_block_bit_frequency_test(test_data: &[u64]) -> (f64, f64) {
         (test_data.len() as f64) / 2.0,
         chi_squared / 2.0,
     )
-    .unwrap();
+    .unwrap_or(0.0);
     (chi_squared, p)
 }
 
@@ -154,15 +154,12 @@ pub fn u64_block_bit_frequency_test(test_data: &[u64]) -> (f64, f64) {
 /// Returns number of runs, p value
 pub fn runs_test(test_data: &[u64], excess_ones: i64) -> (u64, f64) {
     let mut runs: u64 = 0;
-    // This sometimes introduces a off by one error
-    // If the first bit is a 1.
-    // Considerd acceptable error to save additional complexitiy and execution time.
     let mut last_bit = (test_data[0] >> 63) & 1; // Extract the MSB of the first word
 
     for &sample in test_data.iter() {
-        let transitions = sample ^ (sample >> 1); // Transitions within the word
-        runs += transitions.count_ones() as u64; // Count them
-                                                 // Check transition between words
+        let transitions = sample ^ (sample >> 1);
+        runs += transitions.count_ones() as u64;
+
         let first_bit = sample & 1;
         if first_bit != last_bit {
             runs += 1; // Count transition across words
@@ -182,3 +179,64 @@ pub fn runs_test(test_data: &[u64], excess_ones: i64) -> (u64, f64) {
     (runs, p)
 }
 
+/// Divide stream into 8192-bit (1 kiB, 128*u64)blocks.
+/// Save the longest run of ones in the block
+/// Produces bad results with test data shorter than 100 kiB.
+/// NIST Special Publication 800-22 Test 2.4
+/// Returns chi2 statistic, p value
+pub fn longest_ones_run(test_data: &[u64]) -> (f64, f64) {
+    // These constants are taken form NIST 800-22
+    // But actually apply for a block size of 10.000-bits.
+    // TODO: Recalculate these.
+    const PI_TABLE: [f64;7] = [0.0882, 0.2092, 0.2483, 0.1933, 0.1208, 0.0675, 0.0727];
+    const K: usize = 6;
+    const N: f64 = 75.0;
+    let mut last_bit = 0;
+    let mut current_run = 0;
+    // The max_runs values are binned as follows:
+    // =< 10, 11, 12, 13, 14, 15, >= 16.
+    let mut bins: [f64; 7] = [0.0; 7];
+
+    for chunk in test_data.chunks(128) {
+        let mut longest_run = 0;
+
+        for &sample in chunk {
+            let mut value = sample;
+            if sample == 0 {
+                current_run = 0;
+                last_bit = 0;
+            }
+
+            while value != 0 {
+                let ones = value.trailing_ones();
+
+                if last_bit == 1 {
+                    longest_run = longest_run.max(ones + current_run);
+                } else {
+                    longest_run = longest_run.max(ones);
+                }
+
+                current_run = ones;
+                if ones == 64 {
+                    break;
+                }
+                value >>= ones + value.trailing_zeros();
+            }
+            last_bit = sample >> 63;
+        }
+        if longest_run <= 10 {
+            bins[0] += 1.0;
+        } else if longest_run >= 16 {
+            bins[6] += 1.0;
+        } else {
+            bins[(longest_run - 10) as usize] += 1.0;
+        }
+    }
+    let mut chi_squared: f64 = 0.0;
+    println!("{:?}",bins);
+    for i in 0..=K {
+        chi_squared += (bins[i]- N * PI_TABLE[i]).powi(2) / (N * PI_TABLE[i])
+    }
+    let p: f64 = statrs::function::gamma::checked_gamma_lr(K as f64 /2.0,chi_squared/2.0).unwrap_or(0.0);
+    (chi_squared, p)
+}

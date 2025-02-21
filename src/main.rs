@@ -36,11 +36,11 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
 
         println!("Testing for seed: {:#01x}", seed);
         let start = std::time::Instant::now();
-        let (testdata, speed) = stats::generate_test_data(test_rng, sample_size);
+        let (test_data, speed) = stats::generate_test_data(test_rng, sample_size);
         // Relative speed compared to a reference speed of 3.78 GiB/s
         // The reference speed is the speed the rand crate generator runs
         // on a AMD Ryzen 7 5800X
-        let rel_speed: f64 = (speed / (2.66 * ((1 << 30) as f64))) * 100.0;
+        let rel_speed: f64 = (speed / (2.66 * 1073741824.0)) * 100.0;
         println!(
             "Generated {} test data in {:?}. (Speed: {}/s  ({:.4}%))",
             utils::format_byte_count(sample_size * 8),
@@ -49,7 +49,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
             rel_speed
         );
         let start = std::time::Instant::now();
-        let (chi_squared, p) = stats::byte_distribution_test(&testdata);
+        let (chi_squared, p) = stats::byte_distribution_test(&test_data);
         println!(
             "Bytes: Time: {:?}    Chi2: {:.2}  p: {:.4}",
             start.elapsed(),
@@ -57,7 +57,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
             p
         );
         let start = std::time::Instant::now();
-        let avg_distance = stats::leading_zeros_frequency_test(&testdata, leading_zeroes);
+        let avg_distance = stats::leading_zeros_frequency_test(&test_data, leading_zeroes);
         println!(
             "LZ-Space: Time: {:?}    Leading zeros: {:.2}   Dist:  Expected: {:.4}    Measured: {:.0}",
             start.elapsed(),
@@ -66,7 +66,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
             avg_distance
         );
         let start = std::time::Instant::now();
-        let (bit_difference, p) = stats::monobit_test(&testdata);
+        let (bit_difference, p) = stats::monobit_test(&test_data);
         println!(
             "Mono: Time: {:?}    Bit difference: {:.0}   p: {:.4}",
             start.elapsed(),
@@ -74,7 +74,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
             p
         );
         let start = std::time::Instant::now();
-        let (runs, p) = stats::runs_test(&testdata, bit_difference);
+        let (runs, p) = stats::runs_test(&test_data, bit_difference);
         println!(
             "Runs: Time: {:?}    Runs count: {:.0}   p: {:.4}",
             start.elapsed(),
@@ -82,26 +82,48 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
             p
         );
         let start = std::time::Instant::now();
-        let (chi_squared, p) = stats::u64_block_bit_frequency_test(&testdata);
+        let (chi_squared, p) = stats::u64_block_bit_frequency_test(&test_data);
         println!(
             "Blocks: Time: {:?}    Chi2: {:.0}   p: {:.4}",
             start.elapsed(),
             chi_squared,
             p
         );
+        let start = std::time::Instant::now();
+        let (average_run, p) = stats::longest_ones_run(&test_data);
+        println!(
+            "MaxOnes: Time: {:?}    Chi2: {:.3}   p: {:.4}",
+            start.elapsed(),
+            average_run,
+            p
+        );
     }
 }
 
 fn main() {
-    const TEST_SIZE_EXPONENT: usize = 26;
-    const RANDOMSEEDS: usize = 2;
+    let start = std::time::Instant::now();
+    const TEST_SIZE_EXPONENT: usize = 28;
+    const RANDOMSEEDS: usize = 0;
     let mut seeds: Vec<u64> = vec![0, 1, u64::MAX];
     for _ in 0..RANDOMSEEDS {
         seeds.push(rand::random::<u64>());
     }
+    let seeds: Vec<u64> = vec![1];
     println!("\nTesting Reference");
     let mut r = rngs::RefefenceRand::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, &seeds);
+    println!("\nTesting OnlyOnes");
+    let mut r = rngs::testgens::OnlyOne::new(0);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, &[0]);
+    println!("\nTesting OnlyZero");
+    let mut r = rngs::testgens::OnlyZero::new(0);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, &[0]);
+    println!("\nTesting AlternatingBlocks");
+    let mut r = rngs::testgens::AlternatingBlocks::new(0);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, &[0]);
+    println!("\nTesting AlternatingBytes");
+    let mut r = rngs::testgens::AlternatingBytes::new(0);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, &[0]);
     println!("\nTesting RijndaelStream");
     let mut r = rngs::spn::RijndaelStream::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, &seeds);
@@ -126,4 +148,5 @@ fn main() {
     println!("\nTesting StreamNLARXu128");
     let mut r = rngs::stream_nlarx::StreamNLARXu128::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, &seeds);
+    println!("Total runtime: {:?}", start.elapsed());
 }
