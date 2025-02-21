@@ -446,3 +446,91 @@ pub mod spn {
         }
     }
 }
+
+pub mod testgens {
+    use super::RNG;
+
+    pub struct OnlyOne {}
+    impl RNG for OnlyOne {
+        fn new(_seed: u64) -> Self {
+            OnlyOne {}
+        }
+
+        fn next_u32(&mut self) -> u32 {
+            u32::MAX
+        }
+
+        fn next(&mut self) -> u64 {
+            u64::MAX
+        }
+
+        fn advance(&mut self, _delta: usize) {}
+
+        fn reseed(&mut self, _seed: u64) {}
+    }
+
+    pub struct OnlyZero {}
+    impl RNG for OnlyZero {
+        fn new(_seed: u64) -> Self {
+            OnlyZero {}
+        }
+
+        fn next_u32(&mut self) -> u32 {
+            0
+        }
+
+        fn next(&mut self) -> u64 {
+            0
+        }
+
+        fn advance(&mut self, _delta: usize) {}
+
+        fn reseed(&mut self, _seed: u64) {}
+    }
+
+    pub struct AlternatingBlocks {
+        state: u64
+    }
+    impl RNG for AlternatingBlocks {
+        fn new(_seed: u64) -> Self {
+            AlternatingBlocks { state: 0 }
+        }
+
+        fn next_u32(&mut self) -> u32 {
+            self.next() as u32
+        }
+
+        fn next(&mut self) -> u64 {
+            self.advance(1);
+            self.state
+        }
+
+        fn advance(&mut self, delta: usize) {
+            if delta & 1 == 1 {
+                self.state = !self.state;            
+            }
+        }
+
+        fn reseed(&mut self, _seed: u64) {
+        }
+    }
+
+    pub struct AlternatingBytes {}
+    impl RNG for AlternatingBytes {
+        fn new(_seed: u64) -> Self {
+            AlternatingBytes {}
+        }
+
+        fn next_u32(&mut self) -> u32 {
+            0xff00ff00
+        }
+
+        fn next(&mut self) -> u64 {
+            0xff00ff00ff00ff00
+        }
+
+        fn advance(&mut self, _delta: usize) {}
+
+        fn reseed(&mut self, _seed: u64) {}
+    }
+}
