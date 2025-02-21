@@ -31,25 +31,27 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
     } else {
         1
     };
-    println!(
-        "Generating {} per test.",
-        utils::format_byte_count(sample_size * 8)
-    );
     for seed in seeds.iter() {
         test_rng.reseed(*seed);
+
         println!("Testing for seed: {:#01x}", seed);
         let start = std::time::Instant::now();
-        let (chi_squared, p) = stats::byte_distribution_test(test_rng, sample_size);
+        let testdata = stats::generate_test_data(test_rng, sample_size);
+        println!(
+            "Generated {} test data in {:?}.",
+            utils::format_byte_count(sample_size * 8),
+            start.elapsed()
+        );
+        let start = std::time::Instant::now();
+        let (chi_squared, p) = stats::byte_distribution_test(&testdata);
         println!(
             "Bytes: Time: {:?}    Chi2: {:.2}  p: {:.4}",
             start.elapsed(),
             chi_squared,
             p
         );
-        test_rng.reseed(*seed);
         let start = std::time::Instant::now();
-        let avg_distance =
-            stats::leading_zeros_frequency_test(test_rng, sample_size, leading_zeroes);
+        let avg_distance = stats::leading_zeros_frequency_test(&testdata, leading_zeroes);
         println!(
             "LZ-Space: Time: {:?}    Leading zeros: {:.2}   Dist:  Expected: {:.4}    Measured: {:.0}",
             start.elapsed(),
@@ -57,27 +59,24 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
             1 << leading_zeroes,
             avg_distance
         );
-        test_rng.reseed(*seed);
         let start = std::time::Instant::now();
-        let (bit_difference, p) = stats::monobit_test(test_rng, sample_size);
+        let (bit_difference, p) = stats::monobit_test(&testdata);
         println!(
             "Mono: Time: {:?}    Bit difference: {:.0}   p: {:.4}",
             start.elapsed(),
             bit_difference,
             p
         );
-        test_rng.reseed(*seed);
         let start = std::time::Instant::now();
-        let (runs, p) = stats::runs_test(test_rng, sample_size, bit_difference);
+        let (runs, p) = stats::runs_test(&testdata, bit_difference);
         println!(
             "Runs: Time: {:?}    Runs count: {:.0}   p: {:.4}",
             start.elapsed(),
             runs,
             p
         );
-        test_rng.reseed(*seed);
         let start = std::time::Instant::now();
-        let (chi_squared, p) = stats::u64_block_bit_frequency_test(test_rng, sample_size);
+        let (chi_squared, p) = stats::u64_block_bit_frequency_test(&testdata);
         println!(
             "Blocks: Time: {:?}    Chi2: {:.0}   p: {:.4}",
             start.elapsed(),
@@ -99,8 +98,8 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
 }
 
 fn main() {
-    const TEST_SIZE_EXPONENT: usize = 30;
-    const RANDOMSEEDS: usize = 4;
+    const TEST_SIZE_EXPONENT: usize = 32;
+    const RANDOMSEEDS: usize = 2;
     let mut seeds: Vec<u64> = vec![0, 1, u64::MAX];
     for _ in 0..RANDOMSEEDS {
         seeds.push(rand::random::<u64>());
