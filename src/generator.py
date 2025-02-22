@@ -6,11 +6,13 @@ Dual-licensed under Apache 2.0 and MIT terms.
 
 import random
 
+
 def random_constant(bits: int, count: int = 1) -> str:
-	constants = list()
-	for i in range(count):
-		constants.append(hex(random.randint(0, 1 << bits)))
-	return str(constants)
+    constants = list()
+    for i in range(count):
+        constants.append(hex(random.randint(0, 1 << bits)))
+    return str(constants)
+
 
 print(f"8 bits: {random_constant(8, 4)}")
 print(f"16 bits: {random_constant(16, 4)}")

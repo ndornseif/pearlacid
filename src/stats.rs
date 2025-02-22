@@ -9,6 +9,7 @@
 // - Seed output difference
 // - Runs Test (Wald-Wolfowitz)
 // - Birthday spacings test
+// - Blocks average hamming distance.
 
 use core::f64;
 use std::{
@@ -185,17 +186,13 @@ pub fn runs_test(test_data: &[u64], excess_ones: i64) -> (u64, f64) {
 /// NIST Special Publication 800-22 Test 2.4
 /// Returns chi2 statistic, p value
 pub fn longest_ones_run(test_data: &[u64]) -> (f64, f64) {
-    // These constants are taken form NIST 800-22
-    // But actually apply for a block size of 10.000-bits.
-    // TODO: Recalculate these.
-    const PI_TABLE: [f64; 7] = [0.0882, 0.2092, 0.2483, 0.1933, 0.1208, 0.0675, 0.0727];
-    const K: usize = 6;
-    const N: f64 = 75.0;
+    const K: usize = 5;
+    const PI_TABLE: [f64; K+1] = [0.1344793662428856, 0.23272062093019485, 0.2389770820736885, 0.17245227843523026, 0.10381045937538147, 0.11756019294261932];
     let mut last_bit = 0;
     let mut current_run = 0;
     // The max_runs values are binned as follows:
-    // =< 10, 11, 12, 13, 14, 15, >= 16.
-    let mut bins: [f64; 7] = [0.0; 7];
+    // =<10, 11, 12, 13, 14, >=15.
+    let mut bins: [f64; K+1] = [0.0; K+1];
 
     for chunk in test_data.chunks(128) {
         let mut longest_run = 0;
@@ -226,18 +223,18 @@ pub fn longest_ones_run(test_data: &[u64]) -> (f64, f64) {
         }
         if longest_run <= 10 {
             bins[0] += 1.0;
-        } else if longest_run >= 16 {
-            bins[6] += 1.0;
+        } else if longest_run >= 15 {
+            bins[5] += 1.0;
         } else {
             bins[(longest_run - 10) as usize] += 1.0;
         }
     }
     let mut chi_squared: f64 = 0.0;
-    println!("{:?}", bins);
+    let n: f64 = bins.iter().fold(0.0, |acc, x| acc + *x as f64);
     for i in 0..=K {
-        chi_squared += (bins[i] - N * PI_TABLE[i]).powi(2) / (N * PI_TABLE[i])
+        chi_squared += (bins[i] - (n * PI_TABLE[i])).powi(2) / (n * PI_TABLE[i])
     }
     let p: f64 =
-        statrs::function::gamma::checked_gamma_lr(K as f64 / 2.0, chi_squared / 2.0).unwrap_or(0.0);
+        statrs::function::gamma::checked_gamma_ur(K as f64 / 2.0, chi_squared / 2.0).unwrap_or(0.0);
     (chi_squared, p)
 }
