@@ -173,10 +173,13 @@ pub fn runs_test(test_data: &[u64], excess_ones: i64) -> (u64, f64) {
     }
     let num_bits: f64 = test_data.len() as f64 * 64.0;
     let ones_ratio: f64 = ((num_bits / 2.0) + excess_ones as f64) / num_bits;
-    let p: f64 = statrs::function::erf::erfc(
+    let mut p: f64 = statrs::function::erf::erfc(
         ((runs as f64) - (2.0 * ones_ratio * num_bits * (1.0 - ones_ratio))).abs()
             / (2.0 * f64::sqrt(2.0 * num_bits) * ones_ratio * (1.0 - ones_ratio)),
     );
+    if p.is_nan() {
+        p = 0.0;
+    }
     (runs, p)
 }
 

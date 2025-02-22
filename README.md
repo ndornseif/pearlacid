@@ -88,7 +88,7 @@ Linear congruential generators.
 | Randu |   |
 |---|---|
 | Speed | 160% |
-| Fails Tests | Bytes, Spectral, LZ-Space, Blocks, Runs, Mono |
+| Fails Tests | Bytes, Spectral, LZ-Space, Blocks, Runs, Mono, MaxOnes |
 | Output per Step | 31 bits |
 | State Size | 32 bits |
 | Supports | `next_small` |
@@ -98,7 +98,7 @@ Linear congruential generators.
 | Mmix |   |
 |---|---|
 | Speed | 240% |
-| Fails Tests | Bytes |
+| Fails Tests | Bytes, MaxOnes |
 | Output per Step | 64 bits |
 | State Size | 64 bits |
 | Supports | |
@@ -164,6 +164,12 @@ Currently, it only returns the average distance. Comparison of measured distance
 Shorthand: Bytes   
 Measures the occurrences of the 256 possible byte values in the output stream, splitting each 64-bit output block into 8 bytes.
 Calculates the p-value based on the χ² statistic.
+
+### Longest Ones Run
+Shorthand: MaxOnes    
+Splits the bitstream into 8192-bit (1 kiB, 128 x u64) blocks, and measures the longest uninterrupted run of ones.
+Split these values into 6 bins and calculate the p-value based on the χ² statistic. Produces bad results with test data shorter than 100 kiB.
+Based on NIST Special Publication 800-22 Test 2.4
 
 ## License
 
