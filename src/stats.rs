@@ -190,12 +190,19 @@ pub fn runs_test(test_data: &[u64], excess_ones: i64) -> (u64, f64) {
 /// Returns chi2 statistic, p value
 pub fn longest_ones_run(test_data: &[u64]) -> (f64, f64) {
     const K: usize = 5;
-    const PI_TABLE: [f64; K+1] = [0.1344793662428856, 0.23272062093019485, 0.2389770820736885, 0.17245227843523026, 0.10381045937538147, 0.11756019294261932];
+    const PI_TABLE: [f64; K + 1] = [
+        0.1344793662428856,
+        0.23272062093019485,
+        0.2389770820736885,
+        0.17245227843523026,
+        0.10381045937538147,
+        0.11756019294261932,
+    ];
     let mut last_bit = 0;
     let mut current_run = 0;
     // The max_runs values are binned as follows:
     // =<10, 11, 12, 13, 14, >=15.
-    let mut bins: [f64; K+1] = [0.0; K+1];
+    let mut bins: [f64; K + 1] = [0.0; K + 1];
 
     for chunk in test_data.chunks(128) {
         let mut longest_run = 0;
@@ -233,7 +240,7 @@ pub fn longest_ones_run(test_data: &[u64]) -> (f64, f64) {
         }
     }
     let mut chi_squared: f64 = 0.0;
-    let n: f64 = bins.iter().fold(0.0, |acc, x| acc + *x as f64);
+    let n: f64 = bins.iter().fold(0.0, |acc, x| acc + { *x });
     for i in 0..=K {
         chi_squared += (bins[i] - (n * PI_TABLE[i])).powi(2) / (n * PI_TABLE[i])
     }
