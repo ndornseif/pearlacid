@@ -532,4 +532,23 @@ pub mod testgens {
 
         fn reseed(&mut self, _seed: u64) {}
     }
+
+    pub struct AlternatingBits {}
+    impl RNG for AlternatingBits {
+        fn new(_seed: u64) -> Self {
+            AlternatingBits {}
+        }
+
+        fn next_u32(&mut self) -> u32 {
+            0x55555555
+        }
+
+        fn next(&mut self) -> u64 {
+            0x5555555555555555
+        }
+
+        fn advance(&mut self, _delta: usize) {}
+
+        fn reseed(&mut self, _seed: u64) {}
+    }
 }

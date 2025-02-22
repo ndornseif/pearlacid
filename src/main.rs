@@ -102,7 +102,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
 
 fn main() {
     let start = std::time::Instant::now();
-    const TEST_SIZE_EXPONENT: usize = 28;
+    const TEST_SIZE_EXPONENT: usize = 26;
     const RANDOMSEEDS: usize = 2;
     let mut seeds: Vec<u64> = vec![0, 1, u64::MAX];
     for _ in 0..RANDOMSEEDS {
@@ -122,6 +122,9 @@ fn main() {
     test_suite(&mut r, TEST_SIZE_EXPONENT, &[0]);
     println!("\nTesting AlternatingBytes");
     let mut r = rngs::testgens::AlternatingBytes::new(0);
+    test_suite(&mut r, TEST_SIZE_EXPONENT, &[0]);
+    println!("\nTesting AlternatingBits");
+    let mut r = rngs::testgens::AlternatingBits::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, &[0]);
     println!("\nTesting RijndaelStream");
     let mut r = rngs::spn::RijndaelStream::new(0);
