@@ -197,7 +197,7 @@ pub fn longest_ones_run(test_data: &[u64]) -> (f64, f64) {
     // =<10, 11, 12, 13, 14, >=15.
     let mut bins: [f64; K + 1] = [0.0; K + 1];
 
-    for chunk in test_data.chunks(128) {
+    for chunk in test_data.chunks_exact(128) {
         let mut longest_run = 0;
 
         for &sample in chunk {
