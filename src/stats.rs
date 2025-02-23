@@ -7,7 +7,6 @@
 //TODO:
 // Interesing tests:
 // - Seed output difference
-// - Runs Test (Wald-Wolfowitz)
 // - Birthday spacings test
 // - Blocks average hamming distance.
 
@@ -74,12 +73,6 @@ pub fn fill_test_image(
     Ok(())
 }
 
-/// Get p value for given degrees of freedom and chi squared value.
-fn chi_squared_p_value(df: u32, chi_squared: f64) -> f64 {
-    let chi_squared_dist = ChiSquared::new(df as f64).unwrap();
-    chi_squared_dist.cdf(chi_squared)
-}
-
 /// Measures the distribution among the bytes.
 /// Returns chi2 statistic, p value
 pub fn byte_distribution_test(test_data: &[u64]) -> (f64, f64) {
@@ -95,7 +88,7 @@ pub fn byte_distribution_test(test_data: &[u64]) -> (f64, f64) {
     for value in counts {
         chi_squared += (value as f64 - expected).powi(2) / expected;
     }
-    let p = 1.0 - chi_squared_p_value(255, chi_squared);
+    let p = statrs::function::gamma::checked_gamma_lr(chi_squared / 2.0, 255.0 / 2.0).unwrap_or(0.0);
     (chi_squared, p)
 }
 
