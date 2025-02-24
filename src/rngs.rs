@@ -394,6 +394,7 @@ pub mod spn {
 
     /// Implementation is x86 architecture specific.
     /// Will crash if x86 AES instruction set is not available.
+    #[derive(Debug, Copy, Clone)]
     pub struct RijndaelStream {
         counter: u128,
         key: [u8; 16],
@@ -450,6 +451,7 @@ pub mod spn {
 pub mod testgens {
     use super::RNG;
 
+    #[derive(Debug, Copy, Clone)]
     pub struct OnlyOne {}
     impl RNG for OnlyOne {
         fn new(_seed: u64) -> Self {
@@ -469,6 +471,7 @@ pub mod testgens {
         fn reseed(&mut self, _seed: u64) {}
     }
 
+    #[derive(Debug, Copy, Clone)]
     pub struct OnlyZero {}
     impl RNG for OnlyZero {
         fn new(_seed: u64) -> Self {
@@ -488,6 +491,7 @@ pub mod testgens {
         fn reseed(&mut self, _seed: u64) {}
     }
 
+    #[derive(Debug, Copy, Clone)]
     pub struct AlternatingBlocks {
         state: u64,
     }
@@ -514,6 +518,7 @@ pub mod testgens {
         fn reseed(&mut self, _seed: u64) {}
     }
 
+    #[derive(Debug, Copy, Clone)]
     pub struct AlternatingBytes {}
     impl RNG for AlternatingBytes {
         fn new(_seed: u64) -> Self {
@@ -533,6 +538,7 @@ pub mod testgens {
         fn reseed(&mut self, _seed: u64) {}
     }
 
+    #[derive(Debug, Copy, Clone)]
     pub struct AlternatingBits {}
     impl RNG for AlternatingBits {
         fn new(_seed: u64) -> Self {
