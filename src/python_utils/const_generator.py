@@ -2,6 +2,7 @@
 Copyright 2025 N. Dornseif
 
 Dual-licensed under Apache 2.0 and MIT terms.
+Generates random constants.
 """
 
 import random
