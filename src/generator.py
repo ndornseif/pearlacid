@@ -10,7 +10,7 @@ import random
 def random_constant(bits: int, count: int = 1) -> str:
     constants = list()
     for i in range(count):
-        constants.append(hex(random.randint(0, 1 << bits)))
+        constants.append(hex(random.getrandbits(bits)))
     return str(constants)
 
 
