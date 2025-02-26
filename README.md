@@ -174,7 +174,7 @@ Based on NIST Special Publication 800-22 Test 2.4
 ### Binary matrix rank
 Shorthand: Matrix
 Divides the bitstream into 32x32 bit binary matrices (1024 bits, 128 bytes, 16 * u64).
-Determines the rank of each matrix over GF(2) and bins the results into three categories: Rank=32, Rank=31, Rank<32
+Determines the rank of each matrix over GF(2) and bins the results into three categories: Rank=32, Rank=31, Rank<32.
 Calculates the p-value based on the χ² statistic.
 Based on NIST Special Publication 800-22 Test 2.5
 
