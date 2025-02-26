@@ -26,13 +26,13 @@ pub trait RNG {
     fn reseed(&mut self, seed: u64);
 }
 
-pub struct RefefenceRand {
+pub struct ReferenceRand {
     rng: rand::rngs::StdRng,
 }
 
-impl RNG for RefefenceRand {
+impl RNG for ReferenceRand {
     fn new(seed: u64) -> Self {
-        RefefenceRand {
+        ReferenceRand {
             rng: rand::rngs::StdRng::seed_from_u64(seed),
         }
     }

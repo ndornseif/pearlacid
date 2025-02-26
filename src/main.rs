@@ -118,7 +118,7 @@ fn main() {
         seeds.push(rand::random::<u64>());
     }
     println!("\nTesting Reference");
-    let mut r = rngs::RefefenceRand::new(0);
+    let mut r = rngs::ReferenceRand::new(0);
     test_suite(&mut r, TEST_SIZE_EXPONENT, &seeds);
     println!("\nTesting OnlyOnes");
     let mut r = rngs::testgens::OnlyOne::new(0);
