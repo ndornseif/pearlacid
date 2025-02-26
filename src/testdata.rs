@@ -3,7 +3,7 @@
 // Dual-licensed under Apache 2.0 and MIT terms.
 
 //! Data used for unit tests.
-
+#[cfg(test)]
 pub mod matrix_test {
     #[derive(Debug, Copy, Clone)]
     pub struct TestMatrix {

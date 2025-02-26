@@ -4,23 +4,14 @@
 
 //! Collection of PRNGS and methods for statistical analysis.
 
-#![allow(unused_macros)]
-
 pub mod conditioning;
+
 pub mod rngs;
 pub mod stats;
 mod testdata;
 pub mod utils;
 
 use rngs::RNG;
-
-macro_rules! time_it {
-    ($tip:literal, $func:stmt) => {
-        let start = std::time::Instant::now();
-        $func
-        println!("{}: {:?}", $tip, start.elapsed());
-    };
-}
 
 /// Perform performance tests for supplied RNGs.
 /// Performs all tests using any of the supplied seeds.
@@ -111,7 +102,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
 
 fn main() {
     let start = std::time::Instant::now();
-    const TEST_SIZE_EXPONENT: usize = 26;
+    const TEST_SIZE_EXPONENT: usize = 20;
     const RANDOMSEEDS: usize = 2;
     let mut seeds: Vec<u64> = vec![0, 1, u64::MAX];
     for _ in 0..RANDOMSEEDS {

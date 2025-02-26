@@ -113,7 +113,7 @@ pub fn leading_zeros_frequency_test(test_data: &[u64], zero_count: usize) -> f64
 /// Measures the difference between the number of ones and zeros generated.
 /// NIST Special Publication 800-22 Test 2.1
 /// Returns the cummulative difference, p value.
-pub fn monobit_test(test_data: &[u64]) -> (i64, f64) {
+pub fn monobit_test(test_data: &[u64]) -> (f64, f64) {
     let mut difference: i64 = 0;
     for sample in test_data.iter() {
         difference += (sample.count_ones() as i64) - 32;
@@ -121,7 +121,7 @@ pub fn monobit_test(test_data: &[u64]) -> (i64, f64) {
     let p: f64 = statrs::function::erf::erfc(
         (difference.abs() as f64 / f64::sqrt(test_data.len() as f64 * 64.0)) * utils::INV_ROOT2,
     );
-    (difference, p)
+    (difference as f64, p)
 }
 
 /// Measures the ratio of ones and zeroes in each u64
@@ -146,28 +146,28 @@ pub fn u64_block_bit_frequency_test(test_data: &[u64]) -> (f64, f64) {
 /// NIST Special Publication 800-22 Test 2.3
 ///     -> generates 'sample_size' * 8 bytes.
 /// Returns number of runs, p value
-pub fn runs_test(test_data: &[u64], excess_ones: i64) -> (u64, f64) {
-    let mut runs: u64 = 0;
+pub fn runs_test(test_data: &[u64], excess_ones: f64) -> (f64, f64) {
+    let mut runs: f64 = 0.0;
     let mut last_bit = (test_data[0] >> 63) & 1; // Extract the MSB of the first word
 
     for &sample in test_data.iter() {
         let transitions = sample ^ (sample >> 1);
-        runs += transitions.count_ones() as u64;
+        runs += transitions.count_ones() as f64;
 
         let first_bit = sample & 1;
         if first_bit != last_bit {
-            runs += 1; // Count transition across words
+            runs += 1.0; // Count transition across words
         }
 
         last_bit = (sample >> 63) & 1; // Store last bit for next iteration
         if last_bit != 0 {
-            runs -= 1;
+            runs -= 1.0;
         }
     }
     let num_bits: f64 = test_data.len() as f64 * 64.0;
-    let ones_ratio: f64 = ((num_bits / 2.0) + excess_ones as f64) / num_bits;
+    let ones_ratio: f64 = ((num_bits / 2.0) + excess_ones) / num_bits;
     let mut p: f64 = statrs::function::erf::erfc(
-        ((runs as f64) - (2.0 * ones_ratio * num_bits * (1.0 - ones_ratio))).abs()
+        (runs - (2.0 * ones_ratio * num_bits * (1.0 - ones_ratio))).abs()
             / (2.0 * f64::sqrt(2.0 * num_bits) * ones_ratio * (1.0 - ones_ratio)),
     );
     if p.is_nan() {
@@ -281,4 +281,98 @@ pub fn matrix_ranks(test_data: &[u64]) -> (f64, f64) {
     }
     let p: f64 = ((-1.0 * chi_squared) / 2.0).exp();
     (chi_squared, p)
+}
+
+#[cfg(test)]
+mod tests {
+    // Specified in number of u64 blocks.
+    const TEST_DATA_LENGHT: usize = 512;
+    use super::*;
+    use crate::rngs;
+
+    fn rng_test_verification(
+        test_rng: &mut impl RNG,
+        max_p: f64,
+        min_p: f64,
+        max_rslt: f64,
+        min_rslt: f64,
+        test_func: fn(&[u64]) -> (f64, f64),
+    ) {
+        let (test_data, _) = generate_test_data(test_rng, TEST_DATA_LENGHT);
+        let (rslt, p) = test_func(&test_data);
+        assert!(p >= min_p);
+        assert!(p <= max_p);
+        assert!(rslt >= min_rslt);
+        assert!(rslt <= max_rslt);
+    }
+
+    #[test]
+    fn monobit_verification_onlyone() {
+        rng_test_verification(
+            &mut rngs::testgens::OnlyOne::new(0),
+            0.0,
+            0.0,
+            (TEST_DATA_LENGHT as f64) * 64.0 / 2.0,
+            (TEST_DATA_LENGHT as f64) * 64.0 / 2.0,
+            monobit_test,
+        );
+    }
+
+    #[test]
+    fn monobit_verification_onlyzero() {
+        rng_test_verification(
+            &mut rngs::testgens::OnlyZero::new(0),
+            0.0,
+            0.0,
+            (TEST_DATA_LENGHT as f64) * -64.0 / 2.0,
+            (TEST_DATA_LENGHT as f64) * -64.0 / 2.0,
+            monobit_test,
+        );
+    }
+
+    #[test]
+    fn monobit_verification_alternating_bytes() {
+        rng_test_verification(
+            &mut rngs::testgens::AlternatingBytes::new(0),
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            monobit_test,
+        );
+    }
+    #[test]
+    fn monobit_verification_alternating_bits() {
+        rng_test_verification(
+            &mut rngs::testgens::AlternatingBits::new(0),
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            monobit_test,
+        );
+    }
+    #[test]
+    fn monobit_verification_alternating_blocks() {
+        rng_test_verification(
+            &mut rngs::testgens::AlternatingBlocks::new(0),
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            monobit_test,
+        );
+    }
+    #[test]
+    fn monobit_verification_random() {
+        // Can use the infinities for the expected result here since, distribution is verified via the p-value.
+        rng_test_verification(
+            &mut rngs::ReferenceRand::new(0),
+            0.999,
+            0.001,
+            f64::INFINITY,
+            f64::NEG_INFINITY,
+            monobit_test,
+        );
+    }
 }

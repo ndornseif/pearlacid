@@ -412,7 +412,6 @@ pub mod spn {
         }
 
         fn next(&mut self) -> u64 {
-            #![feature(stdarch)]
             self.advance(1);
 
             let mut encrypted = [0u8; 16];
