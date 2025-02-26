@@ -18,7 +18,6 @@ use std::{
 };
 
 use crate::{rngs::RNG, utils};
-use statrs::distribution::{ChiSquared, ContinuousCDF};
 
 /// Generate 'sample size' u64s using the supplied rng.
 ///     -> generates 'sample_size' * 8 bytes.
@@ -88,7 +87,8 @@ pub fn byte_distribution_test(test_data: &[u64]) -> (f64, f64) {
     for value in counts {
         chi_squared += (value as f64 - expected).powi(2) / expected;
     }
-    let p = statrs::function::gamma::checked_gamma_lr(chi_squared / 2.0, 255.0 / 2.0).unwrap_or(0.0);
+    let p =
+        statrs::function::gamma::checked_gamma_lr(chi_squared / 2.0, 255.0 / 2.0).unwrap_or(0.0);
     (chi_squared, p)
 }
 
@@ -177,6 +177,7 @@ pub fn runs_test(test_data: &[u64], excess_ones: i64) -> (u64, f64) {
 }
 
 /// Divide stream into 8192-bit (1 kiB, 128*u64)blocks.
+/// Discarding excess bits.
 /// Save the longest run of ones in the block
 /// Produces bad results with test data shorter than 100 kiB.
 /// NIST Special Publication 800-22 Test 2.4
@@ -239,5 +240,45 @@ pub fn longest_ones_run(test_data: &[u64]) -> (f64, f64) {
     }
     let p: f64 =
         statrs::function::gamma::checked_gamma_ur(K as f64 / 2.0, chi_squared / 2.0).unwrap_or(0.0);
+    (chi_squared, p)
+}
+
+/// Divides the bitstream into 32x32 bit binary matrices.
+/// NIST Special Publication 800-22 Test 2.5
+/// Each matrix is 1024 bits (128 bytes, 16 * u64).
+/// Determines the rank of each matrix over GF(2)
+/// and bins the results into three categories.
+/// Determine p-value via the chi2 statistic.
+/// Returns chi2 statistic, p value
+pub fn matrix_ranks(test_data: &[u64]) -> (f64, f64) {
+    // All matrices are square.
+    const MATRIX_SIZE: usize = 32;
+    // Matrix ranks are binned as follows:
+    // Full rank, one less than full rank, any lower rank
+    // Expected distributions for 32x32 matrix come from:
+    // NIST Special Publication 800-22 Section 3.5
+    const EXPECTED_DISTRIBUTION: [f64; 3] = [0.2888, 0.5776, 0.1336];
+    let mut matrix_ranks: [f64; 3] = [0.0; 3];
+    for chunks in test_data.chunks_exact((MATRIX_SIZE * MATRIX_SIZE) / 64) {
+        let mut matrix: [u32; MATRIX_SIZE] = [0; MATRIX_SIZE];
+        for (i, &block) in chunks.iter().enumerate() {
+            matrix[2 * i] = (block >> 32) as u32;
+            matrix[2 * i + 1] = block as u32;
+        }
+        let rank: usize = utils::rank_binary_matrix(matrix);
+        if rank == MATRIX_SIZE {
+            matrix_ranks[0] += 1.0;
+        } else if rank == MATRIX_SIZE - 1 {
+            matrix_ranks[1] += 1.0;
+        } else {
+            matrix_ranks[2] += 1.0;
+        }
+    }
+    let n: f64 = matrix_ranks.iter().fold(0.0, |acc, x| acc + { *x });
+    let mut chi_squared: f64 = 0.0;
+    for (i, bin) in matrix_ranks.iter().enumerate() {
+        chi_squared += (bin - EXPECTED_DISTRIBUTION[i] * n).powi(2) / (EXPECTED_DISTRIBUTION[i] * n)
+    }
+    let p: f64 = ((-1.0 * chi_squared) / 2.0).exp();
     (chi_squared, p)
 }

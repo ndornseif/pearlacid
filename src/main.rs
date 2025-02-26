@@ -9,6 +9,7 @@
 pub mod conditioning;
 pub mod rngs;
 pub mod stats;
+mod testdata;
 pub mod utils;
 
 use rngs::RNG;
@@ -90,11 +91,19 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
             p
         );
         let start = std::time::Instant::now();
-        let (average_run, p) = stats::longest_ones_run(&test_data);
+        let (chi_squared, p) = stats::longest_ones_run(&test_data);
         println!(
             "MaxOnes: Time: {:?}    Chi2: {:.3}   p: {:.4}",
             start.elapsed(),
-            average_run,
+            chi_squared,
+            p
+        );
+        let start = std::time::Instant::now();
+        let (chi_squared, p) = stats::matrix_ranks(&test_data);
+        println!(
+            "Matrix: Time: {:?}    Chi2: {:.3}   p: {:.4}",
+            start.elapsed(),
+            chi_squared,
             p
         );
     }

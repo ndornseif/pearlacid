@@ -88,7 +88,7 @@ Linear congruential generators.
 | Randu |   |
 |---|---|
 | Speed | 160% |
-| Fails Tests | Bytes, Spectral, LZ-Space, Blocks, Runs, Mono, MaxOnes |
+| Fails Tests | Bytes, Spectral, LZ-Space, Blocks, Runs, Mono, MaxOnes, Matrix |
 | Output per Step | 31 bits |
 | State Size | 32 bits |
 | Supports | `next_small` |
@@ -170,6 +170,13 @@ Shorthand: MaxOnes
 Splits the bitstream into 8192-bit (1 kiB, 128 x u64) blocks, and measures the longest uninterrupted run of ones.
 Split these values into 6 bins and calculate the p-value based on the χ² statistic. Produces bad results with test data shorter than 100 kiB.
 Based on NIST Special Publication 800-22 Test 2.4
+
+### Binary matrix rank
+Shorthand: Matrix
+Divides the bitstream into 32x32 bit binary matrices (1024 bits, 128 bytes, 16 * u64).
+Determines the rank of each matrix over GF(2) and bins the results into three categories: Rank=32, Rank=31, Rank<32
+Calculates the p-value based on the χ² statistic.
+Based on NIST Special Publication 800-22 Test 2.5
 
 ## License
 

@@ -48,3 +48,126 @@ pub fn format_byte_count(num_bytes: usize) -> String {
         format!("{:.2} B", num_bytes as f64)
     }
 }
+
+fn _print_matrix(matrix: &[u32]) {
+    for &row in matrix {
+        println!("{:032b}", row);
+    }
+}
+
+/// Calculate the rank of a 32x32 binary matrix.
+/// Assuming all calculations take place over GF(2).
+/// Alternative procedure compared to the one specified
+/// in Appendix F of NIST Special Publication 800-22.
+/// Speedup of around 2x observed.
+pub fn rank_binary_matrix(matrix: [u32; 32]) -> usize {
+    // Matrix must be square MAXTRIX_SIZE x MAXTRIX_SIZE
+    const MAXTRIX_SIZE: usize = 32;
+    let mut mat = matrix;
+    let mut rank = 0;
+
+    for col_index in 0..MAXTRIX_SIZE {
+        let mask: u32 = 1 << (MAXTRIX_SIZE - 1 - col_index);
+        // Find the pivot row in the current rank or below
+        if let Some(pivot_row) = (rank..MAXTRIX_SIZE).find(|&r| (mat[r] & mask) != 0) {
+            // Swap the pivot row with the current rank row
+            mat.swap(rank, pivot_row);
+            let pivot_val = mat[rank];
+
+            // Eliminate this column only in rows below the pivot row
+            for row in mat.iter_mut().take(MAXTRIX_SIZE).skip(rank + 1) {
+                if (*row & mask) != 0 {
+                    *row ^= pivot_val;
+                }
+            }
+
+            rank += 1;
+        }
+    }
+
+    rank
+}
+
+/// Calculate the rank of a 32x32 binary matrix.
+/// Procedure from Appendix F of NIST Special Publication 800-22
+pub fn rank_binary_matrix_nist(matrix_input: [u32; 32]) -> usize {
+    const MAXTRIX_SIZE: usize = 32;
+    // Matrix must be square MAXTRIX_SIZE x MAXTRIX_SIZE
+    let mut matrix = matrix_input;
+    for col in 0..MAXTRIX_SIZE {
+        let col_mask: u32 = 1 << (MAXTRIX_SIZE - col - 1);
+        // Check if entry at col,col is zero
+        if col_mask & matrix[col] == 0 {
+            // Search following rows for one at row,col
+            for row in col + 1..MAXTRIX_SIZE {
+                if col_mask & matrix[row] != 0 {
+                    // Swap rows
+                    matrix.swap(row, col);
+                    break;
+                }
+            }
+        }
+        // Check if entry at col,col is now one
+        if col_mask & matrix[col] != 0 {
+            // Checking for ones in col in following rows
+            for row in col + 1..MAXTRIX_SIZE {
+                if col_mask & matrix[row] != 0 {
+                    matrix[row] ^= matrix[col];
+                }
+            }
+        }
+    }
+    // Reverse step
+    for col in (0..MAXTRIX_SIZE).rev() {
+        let col_mask: u32 = 1 << (MAXTRIX_SIZE - col - 1);
+        if col_mask & matrix[col] == 0 {
+            for row in (0..col).rev() {
+                if col_mask & matrix[row] != 0 {
+                    // Swap rows
+                    matrix.swap(row, col);
+                    break;
+                }
+            }
+        }
+        if col_mask & matrix[col] != 0 {
+            // Checking for ones in col in following rows
+            for row in (0..col).rev() {
+                if col_mask & matrix[row] != 0 {
+                    matrix[row] ^= matrix[col];
+                }
+            }
+        }
+    }
+    // Count zero rows
+    let mut rank: usize = MAXTRIX_SIZE;
+    for row in matrix {
+        if row == 0 {
+            rank -= 1;
+        }
+    }
+    rank
+}
+#[cfg(test)]
+mod tests {
+    use crate::testdata;
+
+    use super::*;
+
+    #[test]
+    fn binary_matrix_rank_test_nist() {
+        for (i, test_matrix) in testdata::matrix_test::TEST_MATRICES.iter().enumerate() {
+            println!("Matrix: {}", i);
+            assert_eq!(
+                rank_binary_matrix_nist(test_matrix.matrix),
+                test_matrix.rank
+            );
+        }
+    }
+    #[test]
+    fn binary_matrix_rank_test() {
+        for (i, test_matrix) in testdata::matrix_test::TEST_MATRICES.iter().enumerate() {
+            println!("Matrix: {}", i);
+            assert_eq!(rank_binary_matrix(test_matrix.matrix), test_matrix.rank);
+        }
+    }
+}
