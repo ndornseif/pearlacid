@@ -49,7 +49,8 @@ pub fn format_byte_count(num_bytes: usize) -> String {
     }
 }
 
-fn print_matrix(matrix: &[u32]) {
+/// Print a binary matrix represented as list of u32 ints.
+pub fn print_matrix(matrix: &[u32]) {
     for &row in matrix {
         println!("{:032b}", row);
     }
