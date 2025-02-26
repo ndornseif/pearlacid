@@ -42,11 +42,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
         );
         let start = std::time::Instant::now();
         let p = stats::byte_distribution_test(&test_data);
-        println!(
-            "Bytes: Time: {:?} p: {:.6}",
-            start.elapsed(),
-            p
-        );
+        println!("Bytes: Time: {:?} p: {:.6}", start.elapsed(), p);
         let start = std::time::Instant::now();
         let avg_distance = stats::leading_zeros_frequency_test(&test_data, leading_zeroes);
         println!(
@@ -58,39 +54,19 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
         );
         let start = std::time::Instant::now();
         let p = stats::monobit_test(&test_data);
-        println!(
-            "Mono: Time: {:?} p: {:.6}",
-            start.elapsed(),
-            p
-        );
+        println!("Mono: Time: {:?} p: {:.6}", start.elapsed(), p);
         let start = std::time::Instant::now();
         let p = stats::runs_test(&test_data);
-        println!(
-            "Runs: Time: {:?}  p: {:.6}",
-            start.elapsed(),
-            p
-        );
+        println!("Runs: Time: {:?}  p: {:.6}", start.elapsed(), p);
         let start = std::time::Instant::now();
         let p = stats::u64_block_bit_frequency_test(&test_data);
-        println!(
-            "Blocks: Time: {:?} p: {:.6}",
-            start.elapsed(),
-            p
-        );
+        println!("Blocks: Time: {:?} p: {:.6}", start.elapsed(), p);
         let start = std::time::Instant::now();
         let p = stats::longest_ones_run(&test_data);
-        println!(
-            "MaxOnes: Time: {:?} p: {:.6}",
-            start.elapsed(),
-            p
-        );
+        println!("MaxOnes: Time: {:?} p: {:.6}", start.elapsed(), p);
         let start = std::time::Instant::now();
         let p = stats::matrix_ranks(&test_data);
-        println!(
-            "Matrix: Time: {:?} p: {:.6}",
-            start.elapsed(),
-            p
-        );
+        println!("Matrix: Time: {:?} p: {:.6}", start.elapsed(), p);
     }
 }
 

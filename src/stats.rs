@@ -87,9 +87,7 @@ pub fn byte_distribution_test(test_data: &[u64]) -> f64 {
     for value in counts {
         chi_squared += (value as f64 - expected).powi(2) / expected;
     }
-    let p =
-        statrs::function::gamma::checked_gamma_lr(chi_squared / 2.0, 255.0 / 2.0).unwrap_or(0.0);
-    p
+    statrs::function::gamma::checked_gamma_lr(chi_squared / 2.0, 255.0 / 2.0).unwrap_or(0.0)
 }
 
 /// Examines the average distance between u64 values with 'zero_count' leading zeroes.
@@ -133,7 +131,6 @@ pub fn count_excess_ones(test_data: &[u64]) -> f64 {
     }
     difference as f64
 }
-
 
 /// Measures the ratio of ones and zeroes in each u64
 /// NIST Special Publication 800-22 Test 2.2
@@ -315,7 +312,9 @@ mod tests {
         assert!(
             (min_p..=max_p).contains(&p),
             "p-value out of range: expected [{}, {}], got {}",
-            min_p, max_p, p
+            min_p,
+            max_p,
+            p
         );
     }
 
@@ -368,11 +367,6 @@ mod tests {
     }
     #[test]
     fn monobit_verification_random() {
-        rng_test_verification(
-            &mut rngs::ReferenceRand::new(0),
-            0.999,
-            0.001,
-            monobit_test,
-        );
+        rng_test_verification(&mut rngs::ReferenceRand::new(0), 0.999, 0.001, monobit_test);
     }
 }
