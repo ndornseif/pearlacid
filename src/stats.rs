@@ -286,7 +286,7 @@ pub fn matrix_ranks(test_data: &[u64]) -> (f64, f64) {
 #[cfg(test)]
 mod tests {
     // Specified in number of u64 blocks.
-    const TEST_DATA_LENGHT: usize = 512;
+    const TEST_DATA_LENGTH: usize = 512;
     use super::*;
     use crate::rngs;
 
@@ -298,7 +298,7 @@ mod tests {
         min_rslt: f64,
         test_func: fn(&[u64]) -> (f64, f64),
     ) {
-        let (test_data, _) = generate_test_data(test_rng, TEST_DATA_LENGHT);
+        let (test_data, _) = generate_test_data(test_rng, TEST_DATA_LENGTH);
         let (rslt, p) = test_func(&test_data);
         assert!(p >= min_p);
         assert!(p <= max_p);
@@ -312,8 +312,8 @@ mod tests {
             &mut rngs::testgens::OnlyOne::new(0),
             0.0,
             0.0,
-            (TEST_DATA_LENGHT as f64) * 64.0 / 2.0,
-            (TEST_DATA_LENGHT as f64) * 64.0 / 2.0,
+            (TEST_DATA_LENGTH as f64) * 64.0 / 2.0,
+            (TEST_DATA_LENGTH as f64) * 64.0 / 2.0,
             monobit_test,
         );
     }
@@ -324,8 +324,8 @@ mod tests {
             &mut rngs::testgens::OnlyZero::new(0),
             0.0,
             0.0,
-            (TEST_DATA_LENGHT as f64) * -64.0 / 2.0,
-            (TEST_DATA_LENGHT as f64) * -64.0 / 2.0,
+            (TEST_DATA_LENGTH as f64) * -64.0 / 2.0,
+            (TEST_DATA_LENGTH as f64) * -64.0 / 2.0,
             monobit_test,
         );
     }
