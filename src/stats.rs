@@ -286,7 +286,10 @@ pub fn matrix_ranks(test_data: &[u64]) -> (f64, f64) {
 #[cfg(test)]
 mod tests {
     // Specified in number of u64 blocks.
-    const TEST_DATA_LENGTH: usize = 512;
+    const TEST_DATA_LENGTH: f64 = 512.0;
+    const TEST_DATA_BITS: f64 = TEST_DATA_LENGTH * 64.0;
+    const DEFAULT_PMAX: f64 = 1.0;
+    const DEFAULT_PMIN: f64 = 0.0;
     use super::*;
     use crate::rngs;
 
@@ -298,22 +301,28 @@ mod tests {
         min_rslt: f64,
         test_func: fn(&[u64]) -> (f64, f64),
     ) {
-        let (test_data, _) = generate_test_data(test_rng, TEST_DATA_LENGTH);
+        let (test_data, _) = generate_test_data(test_rng, TEST_DATA_LENGTH as usize);
         let (rslt, p) = test_func(&test_data);
-        assert!(p >= min_p);
-        assert!(p <= max_p);
-        assert!(rslt >= min_rslt);
-        assert!(rslt <= max_rslt);
+        assert!(
+            (min_p..=max_p).contains(&p),
+            "p-value out of range: expected [{}, {}], got {}",
+            min_p, max_p, p
+        );
+        assert!(
+            (min_rslt..=max_rslt).contains(&rslt),
+            "Result out of range: expected [{}, {}], got {}",
+            min_rslt, max_rslt, rslt
+        );
     }
 
     #[test]
     fn monobit_verification_onlyone() {
         rng_test_verification(
             &mut rngs::testgens::OnlyOne::new(0),
-            0.0,
-            0.0,
-            (TEST_DATA_LENGTH as f64) * 64.0 / 2.0,
-            (TEST_DATA_LENGTH as f64) * 64.0 / 2.0,
+            DEFAULT_PMIN,
+            DEFAULT_PMIN,
+            TEST_DATA_BITS / 2.0,
+            TEST_DATA_BITS / 2.0,
             monobit_test,
         );
     }
@@ -322,10 +331,10 @@ mod tests {
     fn monobit_verification_onlyzero() {
         rng_test_verification(
             &mut rngs::testgens::OnlyZero::new(0),
-            0.0,
-            0.0,
-            (TEST_DATA_LENGTH as f64) * -64.0 / 2.0,
-            (TEST_DATA_LENGTH as f64) * -64.0 / 2.0,
+            DEFAULT_PMIN,
+            DEFAULT_PMIN,
+            -TEST_DATA_BITS / 2.0,
+            -TEST_DATA_BITS / 2.0,
             monobit_test,
         );
     }
@@ -334,8 +343,8 @@ mod tests {
     fn monobit_verification_alternating_bytes() {
         rng_test_verification(
             &mut rngs::testgens::AlternatingBytes::new(0),
-            1.0,
-            1.0,
+            DEFAULT_PMAX,
+            DEFAULT_PMAX,
             0.0,
             0.0,
             monobit_test,
@@ -345,8 +354,8 @@ mod tests {
     fn monobit_verification_alternating_bits() {
         rng_test_verification(
             &mut rngs::testgens::AlternatingBits::new(0),
-            1.0,
-            1.0,
+            DEFAULT_PMAX,
+            DEFAULT_PMAX,
             0.0,
             0.0,
             monobit_test,
@@ -356,8 +365,8 @@ mod tests {
     fn monobit_verification_alternating_blocks() {
         rng_test_verification(
             &mut rngs::testgens::AlternatingBlocks::new(0),
-            1.0,
-            1.0,
+            DEFAULT_PMAX,
+            DEFAULT_PMAX,
             0.0,
             0.0,
             monobit_test,
