@@ -73,8 +73,8 @@ pub fn fill_test_image(
 }
 
 /// Measures the distribution among the bytes.
-/// Returns chi2 statistic, p value
-pub fn byte_distribution_test(test_data: &[u64]) -> (f64, f64) {
+/// Returns p value
+pub fn byte_distribution_test(test_data: &[u64]) -> f64 {
     let mut counts: [usize; 256] = [0; 256];
     for block in test_data.iter() {
         let sample = block.to_le_bytes();
@@ -89,7 +89,7 @@ pub fn byte_distribution_test(test_data: &[u64]) -> (f64, f64) {
     }
     let p =
         statrs::function::gamma::checked_gamma_lr(chi_squared / 2.0, 255.0 / 2.0).unwrap_or(0.0);
-    (chi_squared, p)
+    p
 }
 
 /// Examines the average distance between u64 values with 'zero_count' leading zeroes.
@@ -112,8 +112,8 @@ pub fn leading_zeros_frequency_test(test_data: &[u64], zero_count: usize) -> f64
 
 /// Measures the difference between the number of ones and zeros generated.
 /// NIST Special Publication 800-22 Test 2.1
-/// Returns the cummulative difference, p value.
-pub fn monobit_test(test_data: &[u64]) -> (f64, f64) {
+/// Returns p value
+pub fn monobit_test(test_data: &[u64]) -> f64 {
     let mut difference: i64 = 0;
     for sample in test_data.iter() {
         difference += (sample.count_ones() as i64) - 32;
@@ -121,13 +121,24 @@ pub fn monobit_test(test_data: &[u64]) -> (f64, f64) {
     let p: f64 = statrs::function::erf::erfc(
         (difference.abs() as f64 / f64::sqrt(test_data.len() as f64 * 64.0)) * utils::INV_ROOT2,
     );
-    (difference as f64, p)
+    p
 }
+
+/// Measures the difference between the number of ones and zeroes in the bitstream.
+/// An excess of ones is indicated by a positive value.
+pub fn count_excess_ones(test_data: &[u64]) -> f64 {
+    let mut difference: i64 = 0;
+    for sample in test_data.iter() {
+        difference += (sample.count_ones() as i64) - 32;
+    }
+    difference as f64
+}
+
 
 /// Measures the ratio of ones and zeroes in each u64
 /// NIST Special Publication 800-22 Test 2.2
-/// Returns chi2 statistic, p value
-pub fn u64_block_bit_frequency_test(test_data: &[u64]) -> (f64, f64) {
+/// Returns p value
+pub fn u64_block_bit_frequency_test(test_data: &[u64]) -> f64 {
     let mut chi_squared: f64 = 0.0;
     let expected: f64 = 0.5;
     for sample in test_data.iter() {
@@ -139,16 +150,16 @@ pub fn u64_block_bit_frequency_test(test_data: &[u64]) -> (f64, f64) {
         chi_squared / 2.0,
     )
     .unwrap_or(0.0);
-    (chi_squared, p)
+    p
 }
 
 /// Meansures the number of unintterupted sequence of ones/zeroes.
 /// NIST Special Publication 800-22 Test 2.3
-///     -> generates 'sample_size' * 8 bytes.
-/// Returns number of runs, p value
-pub fn runs_test(test_data: &[u64], excess_ones: f64) -> (f64, f64) {
+/// Returns p value
+pub fn runs_test(test_data: &[u64]) -> f64 {
     let mut runs: f64 = 0.0;
     let mut last_bit = (test_data[0] >> 63) & 1; // Extract the MSB of the first word
+    let excess_ones = count_excess_ones(test_data);
 
     for &sample in test_data.iter() {
         let transitions = sample ^ (sample >> 1);
@@ -173,7 +184,7 @@ pub fn runs_test(test_data: &[u64], excess_ones: f64) -> (f64, f64) {
     if p.is_nan() {
         p = 0.0;
     }
-    (runs, p)
+    p
 }
 
 /// Divide stream into 8192-bit (1 kiB, 128*u64)blocks.
@@ -181,8 +192,8 @@ pub fn runs_test(test_data: &[u64], excess_ones: f64) -> (f64, f64) {
 /// Save the longest run of ones in the block
 /// Produces bad results with test data shorter than 100 kiB.
 /// NIST Special Publication 800-22 Test 2.4
-/// Returns chi2 statistic, p value
-pub fn longest_ones_run(test_data: &[u64]) -> (f64, f64) {
+/// Returns p value
+pub fn longest_ones_run(test_data: &[u64]) -> f64 {
     const K: usize = 5;
     const PI_TABLE: [f64; K + 1] = [
         0.1344793662428856,
@@ -240,7 +251,7 @@ pub fn longest_ones_run(test_data: &[u64]) -> (f64, f64) {
     }
     let p: f64 =
         statrs::function::gamma::checked_gamma_ur(K as f64 / 2.0, chi_squared / 2.0).unwrap_or(0.0);
-    (chi_squared, p)
+    p
 }
 
 /// Divides the bitstream into 32x32 bit binary matrices.
@@ -249,8 +260,8 @@ pub fn longest_ones_run(test_data: &[u64]) -> (f64, f64) {
 /// Determines the rank of each matrix over GF(2)
 /// and bins the results into three categories.
 /// Determine p-value via the chi2 statistic.
-/// Returns chi2 statistic, p value
-pub fn matrix_ranks(test_data: &[u64]) -> (f64, f64) {
+/// Returns p value
+pub fn matrix_ranks(test_data: &[u64]) -> f64 {
     // All matrices are square.
     const MATRIX_SIZE: usize = 32;
     // Matrix ranks are binned as follows:
@@ -280,7 +291,7 @@ pub fn matrix_ranks(test_data: &[u64]) -> (f64, f64) {
         chi_squared += (bin - EXPECTED_DISTRIBUTION[i] * n).powi(2) / (EXPECTED_DISTRIBUTION[i] * n)
     }
     let p: f64 = ((-1.0 * chi_squared) / 2.0).exp();
-    (chi_squared, p)
+    p
 }
 
 #[cfg(test)]
@@ -297,21 +308,14 @@ mod tests {
         test_rng: &mut impl RNG,
         max_p: f64,
         min_p: f64,
-        max_rslt: f64,
-        min_rslt: f64,
-        test_func: fn(&[u64]) -> (f64, f64),
+        test_func: fn(&[u64]) -> f64,
     ) {
         let (test_data, _) = generate_test_data(test_rng, TEST_DATA_LENGTH as usize);
-        let (rslt, p) = test_func(&test_data);
+        let p = test_func(&test_data);
         assert!(
             (min_p..=max_p).contains(&p),
             "p-value out of range: expected [{}, {}], got {}",
             min_p, max_p, p
-        );
-        assert!(
-            (min_rslt..=max_rslt).contains(&rslt),
-            "Result out of range: expected [{}, {}], got {}",
-            min_rslt, max_rslt, rslt
         );
     }
 
@@ -321,8 +325,6 @@ mod tests {
             &mut rngs::testgens::OnlyOne::new(0),
             DEFAULT_PMIN,
             DEFAULT_PMIN,
-            TEST_DATA_BITS / 2.0,
-            TEST_DATA_BITS / 2.0,
             monobit_test,
         );
     }
@@ -333,8 +335,6 @@ mod tests {
             &mut rngs::testgens::OnlyZero::new(0),
             DEFAULT_PMIN,
             DEFAULT_PMIN,
-            -TEST_DATA_BITS / 2.0,
-            -TEST_DATA_BITS / 2.0,
             monobit_test,
         );
     }
@@ -345,8 +345,6 @@ mod tests {
             &mut rngs::testgens::AlternatingBytes::new(0),
             DEFAULT_PMAX,
             DEFAULT_PMAX,
-            0.0,
-            0.0,
             monobit_test,
         );
     }
@@ -356,8 +354,6 @@ mod tests {
             &mut rngs::testgens::AlternatingBits::new(0),
             DEFAULT_PMAX,
             DEFAULT_PMAX,
-            0.0,
-            0.0,
             monobit_test,
         );
     }
@@ -367,20 +363,15 @@ mod tests {
             &mut rngs::testgens::AlternatingBlocks::new(0),
             DEFAULT_PMAX,
             DEFAULT_PMAX,
-            0.0,
-            0.0,
             monobit_test,
         );
     }
     #[test]
     fn monobit_verification_random() {
-        // Can use the infinities for the expected result here since, distribution is verified via the p-value.
         rng_test_verification(
             &mut rngs::ReferenceRand::new(0),
             0.999,
             0.001,
-            f64::INFINITY,
-            f64::NEG_INFINITY,
             monobit_test,
         );
     }

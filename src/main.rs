@@ -41,11 +41,10 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
             rel_speed
         );
         let start = std::time::Instant::now();
-        let (chi_squared, p) = stats::byte_distribution_test(&test_data);
+        let p = stats::byte_distribution_test(&test_data);
         println!(
-            "Bytes: Time: {:?}    Chi2: {:.2}  p: {:.4}",
+            "Bytes: Time: {:?} p: {:.6}",
             start.elapsed(),
-            chi_squared,
             p
         );
         let start = std::time::Instant::now();
@@ -58,43 +57,38 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
             avg_distance
         );
         let start = std::time::Instant::now();
-        let (bit_difference, p) = stats::monobit_test(&test_data);
+        let p = stats::monobit_test(&test_data);
         println!(
-            "Mono: Time: {:?}    Bit difference: {:.0}   p: {:.4}",
+            "Mono: Time: {:?} p: {:.6}",
             start.elapsed(),
-            bit_difference,
             p
         );
         let start = std::time::Instant::now();
-        let (runs, p) = stats::runs_test(&test_data, bit_difference);
+        let p = stats::runs_test(&test_data);
         println!(
-            "Runs: Time: {:?}    Runs count: {:.0}   p: {:.4}",
+            "Runs: Time: {:?}  p: {:.6}",
             start.elapsed(),
-            runs,
             p
         );
         let start = std::time::Instant::now();
-        let (chi_squared, p) = stats::u64_block_bit_frequency_test(&test_data);
+        let p = stats::u64_block_bit_frequency_test(&test_data);
         println!(
-            "Blocks: Time: {:?}    Chi2: {:.0}   p: {:.4}",
+            "Blocks: Time: {:?} p: {:.6}",
             start.elapsed(),
-            chi_squared,
             p
         );
         let start = std::time::Instant::now();
-        let (chi_squared, p) = stats::longest_ones_run(&test_data);
+        let p = stats::longest_ones_run(&test_data);
         println!(
-            "MaxOnes: Time: {:?}    Chi2: {:.3}   p: {:.4}",
+            "MaxOnes: Time: {:?} p: {:.6}",
             start.elapsed(),
-            chi_squared,
             p
         );
         let start = std::time::Instant::now();
-        let (chi_squared, p) = stats::matrix_ranks(&test_data);
+        let p = stats::matrix_ranks(&test_data);
         println!(
-            "Matrix: Time: {:?}    Chi2: {:.3}   p: {:.4}",
+            "Matrix: Time: {:?} p: {:.6}",
             start.elapsed(),
-            chi_squared,
             p
         );
     }
@@ -102,7 +96,7 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
 
 fn main() {
     let start = std::time::Instant::now();
-    const TEST_SIZE_EXPONENT: usize = 20;
+    const TEST_SIZE_EXPONENT: usize = 24;
     const RANDOMSEEDS: usize = 2;
     let mut seeds: Vec<u64> = vec![0, 1, u64::MAX];
     for _ in 0..RANDOMSEEDS {
