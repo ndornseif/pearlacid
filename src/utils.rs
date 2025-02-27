@@ -50,7 +50,7 @@ pub fn xor_in_place(a: &mut [u64], b: &[u64]) {
 // Calculates fast ceil(log2) of integer.
 pub fn fast_log2(in_int: u64) -> u32 {
     if in_int == 0 {
-        return 0;
+        return u32::MAX;
     }
     64 - (in_int - 1).leading_zeros()
 }
