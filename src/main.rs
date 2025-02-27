@@ -17,11 +17,6 @@ use rngs::RNG;
 /// Performs all tests using any of the supplied seeds.
 fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
     let sample_size: usize = 1 << sample_exponent;
-    let leading_zeroes: usize = if sample_exponent > 14 {
-        sample_exponent - 14
-    } else {
-        1
-    };
     for seed in seeds.iter() {
         test_rng.reseed(*seed);
 
@@ -43,12 +38,10 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
         let p = stats::byte_distribution_test(&test_data);
         println!("Bytes: Time: {:?} p: {:.6}", start.elapsed(), p);
         let start = std::time::Instant::now();
-        let avg_distance = stats::leading_zeros_frequency_test(&test_data, leading_zeroes);
+        let avg_distance = stats::leading_zeros_frequency_test(&test_data);
         println!(
-            "LZ-Space: Time: {:?}    Leading zeros: {:.2}   Dist:  Expected: {:.4}    Measured: {:.0}",
+            "LZ-Space: Time: {:?} p: {:.6}",
             start.elapsed(),
-            leading_zeroes,
-            1 << leading_zeroes,
             avg_distance
         );
         let start = std::time::Instant::now();

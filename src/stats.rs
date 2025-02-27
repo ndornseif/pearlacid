@@ -73,7 +73,7 @@ pub fn fill_test_image(
 }
 
 /// Measures the distribution among the bytes.
-/// Returns p value
+/// Returns p value based on the chi2 statistic.
 pub fn byte_distribution_test(test_data: &[u64]) -> f64 {
     if test_data.is_empty() {
         return 0.0;
@@ -90,32 +90,55 @@ pub fn byte_distribution_test(test_data: &[u64]) -> f64 {
     for value in counts {
         chi_squared += (value as f64 - expected).powi(2) / expected;
     }
-    statrs::function::gamma::checked_gamma_lr(chi_squared / 2.0, 255.0 / 2.0).unwrap_or(0.0)
+    statrs::function::gamma::gamma_lr(chi_squared / 2.0, 255.0 / 2.0).max(0.0).min(1.0)
 }
 
 /// Examines the average distance between u64 values with 'zero_count' leading zeroes.
-/// Returns the average distance.
-pub fn leading_zeros_frequency_test(test_data: &[u64], zero_count: usize) -> f64 {
-    const BIN_COUNT: usize = 1024;
+/// Returns p value based on the chi2 statistic.
+pub fn leading_zeros_frequency_test(test_data: &[u64]) -> f64 {
+    const BIN_COUNT: usize = 256;
+    const EXPECTED_SAMPLE_COUNT: u64 = 16384;
     if test_data.is_empty() {
         return 0.0;
     }
-    let mut distances: Vec<usize> = vec![];
+    // Adjust leading zero threshold so the correct amount of distance are expected.
+    let zero_count: u32 = utils::fast_log2(test_data.len() as u64 / EXPECTED_SAMPLE_COUNT).max(1);
+    let expected_spacing: usize = 1 << zero_count;
+    let max_bin: usize = 4 * expected_spacing;
+    let base_p: f64 = 1.0 / expected_spacing as f64;
+    let bin_spacing: f64 = max_bin as f64 / BIN_COUNT as f64;
+    
+    let geometric_cdf = |x: f64| 1.0 - (1.0 - base_p).powf(x);
+    let mut bins: [f64; BIN_COUNT] = [0.0; BIN_COUNT];
+    let mut expected: [f64; BIN_COUNT] = [0.0; BIN_COUNT];
+
     let mask: u64 = u64::MAX >> (64 - zero_count);
     let mut current_distance: usize = 0;
     for &sample in test_data.iter() {
         if mask & sample == 0 {
-            distances.push(current_distance);
+            bins[((current_distance as f64 / bin_spacing).floor() as usize).min(BIN_COUNT - 1)] += 1.0;
             current_distance = 0;
         } else {
             current_distance += 1;
         }
     }
-    if distances.is_empty() {
+    let n: f64 = bins.iter().sum();
+    if n == 0.0 {
         return 0.0;
     }
-    let sum: f64 = distances.iter().fold(0.0, |acc, x| acc + *x as f64);
-    sum / (distances.len() as f64)
+    for i in 0..BIN_COUNT {
+        if i == BIN_COUNT - 1 {
+            expected[i] = (1.0 - geometric_cdf(bin_spacing * i as f64)) * n;
+        }else {
+            expected[i] = (geometric_cdf(bin_spacing * (i+1) as f64) - geometric_cdf(bin_spacing * i as f64)) * n;
+        }
+
+    }
+    let mut chi_squared: f64 = 0.0;
+    for (i, bin) in bins.iter().enumerate() {
+        chi_squared += (*bin - expected[i]).powi(2)/expected[i];
+    }
+    statrs::function::gamma::gamma_lr((BIN_COUNT as f64 - 1.0)/2.0, chi_squared / 2.0).max(0.0).min(1.0)
 }
 
 /// Measures the difference between the number of ones and zeros generated.
