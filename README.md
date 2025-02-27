@@ -156,9 +156,8 @@ Based on NIST Special Publication 800-22 Test 2.3.
 ### Leading zeroes spacing
 Shorthand: LZ-Space    
 Measures the average distance between blocks of 64 bits that contain at least n leading zeroes.
-n is chosen by default so that the expected value for the number of blocks found is 4096.
-TODO: Calculate a proper p-value for this test.
-Currently, it only returns the average distance. Comparison of measured distances to the expected exponential distribution is possible.
+n is chosen by default so that the expected value for the number of blocks found is 16384.
+The distances are binned into 256 bins and the χ² statistic is used to calculate the p-value.
 
 ### Byte frequency
 Shorthand: Bytes   
