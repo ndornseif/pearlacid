@@ -14,6 +14,11 @@ pub fn xor_in_place(a: &mut [u64], b: &[u64]) {
     }
 }
 
+// Calculates fast ceil(log2) of integer.
+pub fn fast_log2(in_int: u64) -> u32 {
+    64 - (in_int - 1).leading_zeros() as u32
+}
+
 /// Create 24-bit color .ppm image from byte vec.
 /// pixels must contain height * width * 3 bytes.
 /// Useful for visually checking for patterns in data.
