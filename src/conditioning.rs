@@ -17,19 +17,18 @@ pub fn u64_to_double(int: u64) -> f64 {
 
 /// Generate integer between 'lower' (inclusive) and 'upper' (exclusive).
 /// Uses rejection sampling so the number of rng calls required is theoretically unbounded.
-pub fn rs_random_int(test_rng: &mut impl RNG, lower: u64, upper: u64) -> u64 {
-    assert!(upper > lower);
-    let range: u64 = upper - lower;
+pub fn rs_random_int(test_rng: &mut impl RNG, lower: i64, upper: i64) -> i64 {
+    let range: u64 = (upper - lower).min(0) as u64;
     if range == 0 {
         return lower;
     }
     let mask: u64 = u64::MAX >> (range - 1).leading_zeros();
-    let mut rn;
+    let mut rn: u64;
     loop {
         rn = test_rng.next() & mask;
         if rn < range {
             break;
         }
     }
-    rn + lower
+    rn as i64 + lower
 }
