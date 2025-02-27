@@ -90,7 +90,7 @@ pub fn byte_distribution_test(test_data: &[u64]) -> f64 {
     for value in counts {
         chi_squared += (value as f64 - expected).powi(2) / expected;
     }
-    statrs::function::gamma::gamma_lr(chi_squared / 2.0, 255.0 / 2.0).max(0.0).min(1.0)
+    statrs::function::gamma::gamma_lr(chi_squared / 2.0, 255.0 / 2.0).clamp(0.0, 1.0)
 }
 
 /// Examines the average distance between u64 values with 'zero_count' leading zeroes.
@@ -98,6 +98,7 @@ pub fn byte_distribution_test(test_data: &[u64]) -> f64 {
 pub fn leading_zeros_frequency_test(test_data: &[u64]) -> f64 {
     const BIN_COUNT: usize = 256;
     const EXPECTED_SAMPLE_COUNT: u64 = 16384;
+
     if test_data.is_empty() {
         return 0.0;
     }
@@ -107,40 +108,43 @@ pub fn leading_zeros_frequency_test(test_data: &[u64]) -> f64 {
     let max_bin: usize = 4 * expected_spacing;
     let base_p: f64 = 1.0 / expected_spacing as f64;
     let bin_spacing: f64 = max_bin as f64 / BIN_COUNT as f64;
-    
+
     let geometric_cdf = |x: f64| 1.0 - (1.0 - base_p).powf(x);
     let mut bins: [f64; BIN_COUNT] = [0.0; BIN_COUNT];
     let mut expected: [f64; BIN_COUNT] = [0.0; BIN_COUNT];
-
     let mask: u64 = u64::MAX >> (64 - zero_count);
     let mut current_distance: usize = 0;
-    for &sample in test_data.iter() {
-        if mask & sample == 0 {
-            bins[((current_distance as f64 / bin_spacing).floor() as usize).min(BIN_COUNT - 1)] += 1.0;
+
+    for &sample in test_data {
+        if (sample & mask) == 0 {
+            let bin_index = (current_distance as f64 / bin_spacing).floor() as usize;
+            bins[bin_index.min(BIN_COUNT - 1)] += 1.0;
             current_distance = 0;
         } else {
             current_distance += 1;
         }
     }
-    let n: f64 = bins.iter().sum();
-    if n == 0.0 {
+
+    let total_samples: f64 = bins.iter().sum();
+    if total_samples == 0.0 {
         return 0.0;
     }
-    for i in 0..BIN_COUNT {
-        if i == BIN_COUNT - 1 {
-            expected[i] = (1.0 - geometric_cdf(bin_spacing * i as f64)) * n;
-        }else {
-            expected[i] = (geometric_cdf(bin_spacing * (i+1) as f64) - geometric_cdf(bin_spacing * i as f64)) * n;
-        }
-
+    for (i, entry) in expected.iter_mut().enumerate() {
+        *entry = if i == BIN_COUNT - 1 {
+            (1.0 - geometric_cdf(bin_spacing * i as f64)) * total_samples
+        } else {
+            (geometric_cdf(bin_spacing * (i + 1) as f64) - geometric_cdf(bin_spacing * i as f64))
+                * total_samples
+        };
     }
-    let mut chi_squared: f64 = 0.0;
-    for (i, bin) in bins.iter().enumerate() {
-        chi_squared += (*bin - expected[i]).powi(2)/expected[i];
-    }
-    statrs::function::gamma::gamma_lr((BIN_COUNT as f64 - 1.0)/2.0, chi_squared / 2.0).max(0.0).min(1.0)
+    let chi_squared: f64 = bins
+        .iter()
+        .zip(expected.iter())
+        .map(|(bin, exp)| (*bin - exp).powi(2) / exp)
+        .sum();
+    statrs::function::gamma::gamma_lr((BIN_COUNT as f64 - 1.0) / 2.0, chi_squared / 2.0)
+        .clamp(0.0, 1.0)
 }
-
 /// Measures the difference between the number of ones and zeros generated.
 /// NIST Special Publication 800-22 Test 2.1
 /// Returns p value
@@ -154,8 +158,8 @@ pub fn monobit_test(test_data: &[u64]) -> f64 {
     }
     statrs::function::erf::erfc(
         (difference.abs() as f64 / f64::sqrt(test_data.len() as f64 * 64.0)) * utils::INV_ROOT2,
-    ).max(0.0).min(1.0)
-
+    )
+    .clamp(0.0, 1.0)
 }
 
 /// Measures the difference between the number of ones and zeroes in the bitstream.
@@ -184,11 +188,8 @@ pub fn u64_block_bit_frequency_test(test_data: &[u64]) -> f64 {
         chi_squared += ((sample.count_ones() as f64) / 64.0 - expected).powi(2);
     }
     chi_squared *= 4.0 * 64.0;
-    statrs::function::gamma::gamma_lr(
-        (test_data.len() as f64) / 2.0,
-        chi_squared / 2.0,
-    )
-    .max(0.0).min(1.0)
+    statrs::function::gamma::gamma_lr((test_data.len() as f64) / 2.0, chi_squared / 2.0)
+        .clamp(0.0, 1.0)
 }
 
 /// Meansures the number of unintterupted sequence of ones/zeroes.
@@ -221,7 +222,8 @@ pub fn runs_test(test_data: &[u64]) -> f64 {
     statrs::function::erf::erfc(
         (runs - (2.0 * ones_ratio * num_bits * (1.0 - ones_ratio))).abs()
             / (2.0 * f64::sqrt(2.0 * num_bits) * ones_ratio * (1.0 - ones_ratio)),
-    ).max(0.0).min(1.0)
+    )
+    .clamp(0.0, 1.0)
 }
 
 /// Divide stream into 8192-bit (1 kiB, 128*u64)blocks.
@@ -285,13 +287,12 @@ pub fn longest_ones_run(test_data: &[u64]) -> f64 {
         }
     }
     let mut chi_squared: f64 = 0.0;
-    let n: f64 = bins.iter().fold(0.0, |acc, x| acc + { *x });
+    let n: f64 = bins.iter().sum();
     for i in 0..=K {
         chi_squared += (bins[i] - (n * PI_TABLE[i])).powi(2) / (n * PI_TABLE[i])
     }
 
-    statrs::function::gamma::gamma_ur(K as f64 / 2.0, chi_squared / 2.0).max(0.0).min(1.0)
-
+    statrs::function::gamma::gamma_ur(K as f64 / 2.0, chi_squared / 2.0).clamp(0.0, 1.0)
 }
 
 /// Divides the bitstream into 32x32 bit binary matrices.
@@ -333,7 +334,7 @@ pub fn matrix_ranks(test_data: &[u64]) -> f64 {
     for (i, bin) in matrix_ranks.iter().enumerate() {
         chi_squared += (bin - EXPECTED_DISTRIBUTION[i] * n).powi(2) / (EXPECTED_DISTRIBUTION[i] * n)
     }
-    ((-1.0 * chi_squared) / 2.0).exp()
+    ((-1.0 * chi_squared) / 2.0).exp().clamp(0.0, 1.0)
 }
 
 #[cfg(test)]
