@@ -42,10 +42,11 @@ macro_rules! run_test {
         let p: f64 = $test_fn(&$test_data);
         $p_values.push(p);
         print!(
-            "{:<10}: Time: {}     p: {:.6}",
+            "{:<10}: Time: {}     p: {:.6}     flq: {:<4}",
             $test_name,
             utils::format_elapsed_time(start.elapsed()),
-            p
+            p,
+            fail_quantity(p)
         );
         if (MIN_P..=MAX_P).contains(&p) {
             println!("   - {}", PASS_STR);
@@ -64,6 +65,26 @@ fn measure_reference_speed() -> f64 {
     let mut ref_rng = rngs::ReferenceRand::new(0);
     let (_, speed) = stats::generate_test_data(&mut ref_rng, SPEED_MEASURE_SAMPLE_SIZE);
     speed
+}
+
+/// Logarithmic quantity to specify how far away from passing a failed test was.
+fn fail_quantity(p: f64) -> u32 {
+
+    if p < P_TOLERANCE {
+        if p == 0.0 {
+            9999
+        }else {
+            utils::fast_log2((P_TOLERANCE / p) as u64)  
+        }
+    } else if p > 1.0 - P_TOLERANCE {
+        if 1.0 - p == 0.0 {
+            9999
+        } else{
+            utils::fast_log2((P_TOLERANCE / (1.0 - p)) as u64)
+        }
+    } else {
+        0
+    }
 }
 
 /// Perform performance tests for supplied RNG.
@@ -141,5 +162,14 @@ pub fn test_suite_with_seeds(test_rng: &mut impl RNG, sample_size: usize, seeds:
         );
     }
     let total_tests: u32 = test_results.iter().sum();
-    println!("Overall result: {}          ( {} / {} passed)", if total_tests == test_results[0] {PASS_STR}else{FAIL_STR}, test_results[0], total_tests);
+    println!(
+        "Overall result: {}          ( {} / {} passed)",
+        if total_tests == test_results[0] {
+            PASS_STR
+        } else {
+            FAIL_STR
+        },
+        test_results[0],
+        total_tests
+    );
 }
