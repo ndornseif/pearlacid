@@ -19,31 +19,30 @@ fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
     let sample_size: usize = 1 << sample_exponent;
     for seed in seeds.iter() {
         test_rng.reseed(*seed);
-
         println!("Testing for seed: {:#01x}", seed);
         let start = std::time::Instant::now();
+        let pre_clock: u64 = unsafe { core::arch::x86_64::_rdtsc() };
         let (test_data, speed) = stats::generate_test_data(test_rng, sample_size);
         // Relative speed compared to a reference speed of 3.78 GiB/s
         // The reference speed is the speed the rand crate generator runs
         // on a AMD Ryzen 7 5800X
+        let cycle_count: f64 = unsafe { core::arch::x86_64::_rdtsc() - pre_clock } as f64;
         let rel_speed: f64 = (speed / (2.66 * 1073741824.0)) * 100.0;
         println!(
-            "Generated {} test data in {:?}. (Speed: {}/s  ({:.4}%))",
+            "Generated {} test data in {:?}. (Speed: {}/s  ({:.4}%)) ({} cycles ({:.4} cycles/byte))",
             utils::format_byte_count(sample_size * 8),
             start.elapsed(),
             utils::format_byte_count(speed as usize),
-            rel_speed
+            rel_speed,
+            cycle_count,
+            cycle_count / (sample_size as f64* 8.0)
         );
         let start = std::time::Instant::now();
         let p = stats::byte_distribution_test(&test_data);
         println!("Bytes: Time: {:?} p: {:.6}", start.elapsed(), p);
         let start = std::time::Instant::now();
-        let avg_distance = stats::leading_zeros_frequency_test(&test_data);
-        println!(
-            "LZ-Space: Time: {:?} p: {:.6}",
-            start.elapsed(),
-            avg_distance
-        );
+        let p = stats::leading_zeros_frequency_test(&test_data);
+        println!("LZ-Space: Time: {:?} p: {:.6}", start.elapsed(), p);
         let start = std::time::Instant::now();
         let p = stats::monobit_test(&test_data);
         println!("Mono: Time: {:?} p: {:.6}", start.elapsed(), p);
