@@ -90,6 +90,9 @@ pub fn byte_distribution_test(test_data: &[u64]) -> f64 {
     for value in counts {
         chi_squared += (value as f64 - expected).powi(2) / expected;
     }
+    if chi_squared == 0.0 {
+        return 0.0;
+    }
     statrs::function::gamma::gamma_lr(chi_squared / 2.0, 255.0 / 2.0).clamp(0.0, 1.0)
 }
 
@@ -142,6 +145,9 @@ pub fn leading_zeros_frequency_test(test_data: &[u64]) -> f64 {
         .zip(expected.iter())
         .map(|(bin, exp)| (*bin - exp).powi(2) / exp)
         .sum();
+    if chi_squared == 0.0 {
+        return 0.0;
+    }
     statrs::function::gamma::gamma_lr((BIN_COUNT as f64 - 1.0) / 2.0, chi_squared / 2.0)
         .clamp(0.0, 1.0)
 }
@@ -186,6 +192,9 @@ pub fn u64_block_bit_frequency_test(test_data: &[u64]) -> f64 {
     let expected: f64 = 0.5;
     for sample in test_data.iter() {
         chi_squared += ((sample.count_ones() as f64) / 64.0 - expected).powi(2);
+    }
+    if chi_squared == 0.0 {
+        return 0.0;
     }
     chi_squared *= 4.0 * 64.0;
     statrs::function::gamma::gamma_lr((test_data.len() as f64) / 2.0, chi_squared / 2.0)
@@ -233,8 +242,8 @@ pub fn runs_test(test_data: &[u64]) -> f64 {
 /// NIST Special Publication 800-22 Test 2.4
 /// Returns p value
 pub fn longest_ones_run(test_data: &[u64]) -> f64 {
-    const K: usize = 5;
-    const PI_TABLE: [f64; K + 1] = [
+    const BIN_COUNT: usize = 5;
+    const PI_TABLE: [f64; BIN_COUNT + 1] = [
         0.1344793662428856,
         0.23272062093019485,
         0.2389770820736885,
@@ -249,7 +258,7 @@ pub fn longest_ones_run(test_data: &[u64]) -> f64 {
     let mut current_run = 0;
     // The max_runs values are binned as follows:
     // =<10, 11, 12, 13, 14, >=15.
-    let mut bins: [f64; K + 1] = [0.0; K + 1];
+    let mut bins: [f64; BIN_COUNT + 1] = [0.0; BIN_COUNT + 1];
 
     for chunk in test_data.chunks_exact(128) {
         let mut longest_run = 0;
@@ -288,11 +297,13 @@ pub fn longest_ones_run(test_data: &[u64]) -> f64 {
     }
     let mut chi_squared: f64 = 0.0;
     let n: f64 = bins.iter().sum();
-    for i in 0..=K {
+    for i in 0..=BIN_COUNT {
         chi_squared += (bins[i] - (n * PI_TABLE[i])).powi(2) / (n * PI_TABLE[i])
     }
-
-    statrs::function::gamma::gamma_ur(K as f64 / 2.0, chi_squared / 2.0).clamp(0.0, 1.0)
+    if chi_squared == 0.0 {
+        return 0.0;
+    }
+    statrs::function::gamma::gamma_ur(BIN_COUNT as f64 / 2.0, chi_squared / 2.0).clamp(0.0, 1.0)
 }
 
 /// Divides the bitstream into 32x32 bit binary matrices.
