@@ -6,8 +6,6 @@
 //! All implement the RNG interface, some feature additional methods like:
 //! seek(delta: usize)
 
-use rand::{RngCore, SeedableRng};
-
 /// General trait for PRNGs
 pub trait RNG {
     /// Initialize with specified seed.
@@ -33,16 +31,16 @@ pub struct ReferenceRand {
 impl RNG for ReferenceRand {
     fn new(seed: u64) -> Self {
         ReferenceRand {
-            rng: rand::rngs::StdRng::seed_from_u64(seed),
+            rng: <rand::rngs::StdRng as rand::SeedableRng>::seed_from_u64(seed),
         }
     }
 
     fn next_u32(&mut self) -> u32 {
-        self.rng.next_u32()
+        rand::RngCore::next_u32(&mut self.rng)
     }
 
     fn next(&mut self) -> u64 {
-        self.rng.next_u64()
+        rand::RngCore::next_u64(&mut self.rng)
     }
 
     fn advance(&mut self, delta: usize) {
@@ -52,7 +50,7 @@ impl RNG for ReferenceRand {
     }
 
     fn reseed(&mut self, seed: u64) {
-        self.rng = rand::rngs::StdRng::seed_from_u64(seed);
+        self.rng = <rand::rngs::StdRng as rand::SeedableRng>::seed_from_u64(seed);
     }
 }
 

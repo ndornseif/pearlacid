@@ -8,21 +8,36 @@ use std::{fs::File, io::Write, path::Path, time::Duration};
 
 pub const INV_ROOT2: f64 = 0.7071067811865475;
 
-
 /// Format a duration to a fixed width.
 pub fn format_elapsed_time(duration: Duration) -> String {
     const DECIMAL_DIGITS: usize = 4;
     let round_mul: f64 = 10.0_f64.powi(DECIMAL_DIGITS as i32);
-    let secs = duration.as_secs_f64(); 
+    let secs = duration.as_secs_f64();
 
     if secs >= 1.0 {
-        format!("{:<1$} s ", (secs * round_mul).floor() / round_mul, DECIMAL_DIGITS + 4)
+        format!(
+            "{:<1$} s ",
+            (secs * round_mul).floor() / round_mul,
+            DECIMAL_DIGITS + 4
+        )
     } else if secs >= 1e-3 {
-        format!("{:<1$} ms", (secs * 1e3 * round_mul).floor() / round_mul, DECIMAL_DIGITS + 4)
-    } else if secs >= 1e-6{
-        format!("{:<1$} µs", (secs * 1e6 * round_mul).floor() / round_mul, DECIMAL_DIGITS + 4)
+        format!(
+            "{:<1$} ms",
+            (secs * 1e3 * round_mul).floor() / round_mul,
+            DECIMAL_DIGITS + 4
+        )
+    } else if secs >= 1e-6 {
+        format!(
+            "{:<1$} µs",
+            (secs * 1e6 * round_mul).floor() / round_mul,
+            DECIMAL_DIGITS + 4
+        )
     } else {
-        format!("{:<1$} ns", (secs * 1e9 * round_mul).floor() / round_mul, DECIMAL_DIGITS + 4)
+        format!(
+            "{:<1$} ns",
+            (secs * 1e9 * round_mul).floor() / round_mul,
+            DECIMAL_DIGITS + 4
+        )
     }
 }
 /// XOR two u64 slices in place.

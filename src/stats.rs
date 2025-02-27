@@ -93,7 +93,7 @@ pub fn byte_distribution_test(test_data: &[u64]) -> f64 {
     if chi_squared == 0.0 {
         return 0.0;
     }
-    statrs::function::gamma::gamma_lr(255.0 / 2.0,chi_squared / 2.0).clamp(0.0, 1.0)
+    statrs::function::gamma::gamma_lr(255.0 / 2.0, chi_squared / 2.0).clamp(0.0, 1.0)
 }
 
 /// Examines the average distance between u64 values with 'zero_count' leading zeroes.
