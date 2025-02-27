@@ -355,7 +355,6 @@ pub fn matrix_ranks(test_data: &[u64]) -> f64 {
 mod tests {
     // Specified in number of u64 blocks.
     const TEST_DATA_LENGTH: f64 = 512.0;
-    const TEST_DATA_BITS: f64 = TEST_DATA_LENGTH * 64.0;
     const DEFAULT_PMAX: f64 = 1.0;
     const DEFAULT_PMIN: f64 = 0.0;
     use super::*;
