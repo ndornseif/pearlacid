@@ -152,10 +152,10 @@ pub fn monobit_test(test_data: &[u64]) -> f64 {
     for sample in test_data.iter() {
         difference += (sample.count_ones() as i64) - 32;
     }
-    let p: f64 = statrs::function::erf::erfc(
+    statrs::function::erf::erfc(
         (difference.abs() as f64 / f64::sqrt(test_data.len() as f64 * 64.0)) * utils::INV_ROOT2,
-    );
-    p
+    ).max(0.0).min(1.0)
+
 }
 
 /// Measures the difference between the number of ones and zeroes in the bitstream.
@@ -184,12 +184,11 @@ pub fn u64_block_bit_frequency_test(test_data: &[u64]) -> f64 {
         chi_squared += ((sample.count_ones() as f64) / 64.0 - expected).powi(2);
     }
     chi_squared *= 4.0 * 64.0;
-    let p: f64 = statrs::function::gamma::checked_gamma_lr(
+    statrs::function::gamma::gamma_lr(
         (test_data.len() as f64) / 2.0,
         chi_squared / 2.0,
     )
-    .unwrap_or(0.0);
-    p
+    .max(0.0).min(1.0)
 }
 
 /// Meansures the number of unintterupted sequence of ones/zeroes.
@@ -219,14 +218,10 @@ pub fn runs_test(test_data: &[u64]) -> f64 {
     }
     let num_bits: f64 = test_data.len() as f64 * 64.0;
     let ones_ratio: f64 = ((num_bits / 2.0) + excess_ones) / num_bits;
-    let mut p: f64 = statrs::function::erf::erfc(
+    statrs::function::erf::erfc(
         (runs - (2.0 * ones_ratio * num_bits * (1.0 - ones_ratio))).abs()
             / (2.0 * f64::sqrt(2.0 * num_bits) * ones_ratio * (1.0 - ones_ratio)),
-    );
-    if p.is_nan() {
-        p = 0.0;
-    }
-    p
+    ).max(0.0).min(1.0)
 }
 
 /// Divide stream into 8192-bit (1 kiB, 128*u64)blocks.
@@ -294,9 +289,9 @@ pub fn longest_ones_run(test_data: &[u64]) -> f64 {
     for i in 0..=K {
         chi_squared += (bins[i] - (n * PI_TABLE[i])).powi(2) / (n * PI_TABLE[i])
     }
-    let p: f64 =
-        statrs::function::gamma::checked_gamma_ur(K as f64 / 2.0, chi_squared / 2.0).unwrap_or(0.0);
-    p
+
+    statrs::function::gamma::gamma_ur(K as f64 / 2.0, chi_squared / 2.0).max(0.0).min(1.0)
+
 }
 
 /// Divides the bitstream into 32x32 bit binary matrices.
@@ -338,8 +333,7 @@ pub fn matrix_ranks(test_data: &[u64]) -> f64 {
     for (i, bin) in matrix_ranks.iter().enumerate() {
         chi_squared += (bin - EXPECTED_DISTRIBUTION[i] * n).powi(2) / (EXPECTED_DISTRIBUTION[i] * n)
     }
-    let p: f64 = ((-1.0 * chi_squared) / 2.0).exp();
-    p
+    ((-1.0 * chi_squared) / 2.0).exp()
 }
 
 #[cfg(test)]
