@@ -15,7 +15,6 @@ use rngs::RNG;
 
 /// Perform performance tests for supplied RNGs.
 /// Performs all tests using any of the supplied seeds.
-/// Runs: Byte distribution, LZ-Distance, Monobit, U64 blocks.
 fn test_suite(test_rng: &mut impl RNG, sample_exponent: usize, seeds: &[u64]) {
     let sample_size: usize = 1 << sample_exponent;
     let leading_zeroes: usize = if sample_exponent > 14 {
