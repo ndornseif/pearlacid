@@ -76,7 +76,7 @@ pub fn fill_test_image(
 /// Returns p value
 pub fn byte_distribution_test(test_data: &[u64]) -> f64 {
     if test_data.is_empty() {
-        return  0.0;
+        return 0.0;
     }
     let mut counts: [usize; 256] = [0; 256];
     for block in test_data.iter() {
@@ -96,19 +96,23 @@ pub fn byte_distribution_test(test_data: &[u64]) -> f64 {
 /// Examines the average distance between u64 values with 'zero_count' leading zeroes.
 /// Returns the average distance.
 pub fn leading_zeros_frequency_test(test_data: &[u64], zero_count: usize) -> f64 {
+    const BIN_COUNT: usize = 1024;
     if test_data.is_empty() {
-        return  0.0;
+        return 0.0;
     }
     let mut distances: Vec<usize> = vec![];
     let mask: u64 = u64::MAX >> (64 - zero_count);
     let mut current_distance: usize = 0;
-    for sample in test_data.iter() {
+    for &sample in test_data.iter() {
         if mask & sample == 0 {
             distances.push(current_distance);
             current_distance = 0;
         } else {
             current_distance += 1;
         }
+    }
+    if distances.is_empty() {
+        return 0.0;
     }
     let sum: f64 = distances.iter().fold(0.0, |acc, x| acc + *x as f64);
     sum / (distances.len() as f64)
@@ -119,7 +123,7 @@ pub fn leading_zeros_frequency_test(test_data: &[u64], zero_count: usize) -> f64
 /// Returns p value
 pub fn monobit_test(test_data: &[u64]) -> f64 {
     if test_data.is_empty() {
-        return  0.0;
+        return 0.0;
     }
     let mut difference: i64 = 0;
     for sample in test_data.iter() {
@@ -135,7 +139,7 @@ pub fn monobit_test(test_data: &[u64]) -> f64 {
 /// An excess of ones is indicated by a positive value.
 pub fn count_excess_ones(test_data: &[u64]) -> f64 {
     if test_data.is_empty() {
-        return  0.0;
+        return 0.0;
     }
     let mut difference: i64 = 0;
     for sample in test_data.iter() {
@@ -149,7 +153,7 @@ pub fn count_excess_ones(test_data: &[u64]) -> f64 {
 /// Returns p value
 pub fn u64_block_bit_frequency_test(test_data: &[u64]) -> f64 {
     if test_data.is_empty() {
-        return  0.0;
+        return 0.0;
     }
     let mut chi_squared: f64 = 0.0;
     let expected: f64 = 0.5;
@@ -170,7 +174,7 @@ pub fn u64_block_bit_frequency_test(test_data: &[u64]) -> f64 {
 /// Returns p value
 pub fn runs_test(test_data: &[u64]) -> f64 {
     if test_data.is_empty() {
-        return  0.0;
+        return 0.0;
     }
     let mut runs: f64 = 0.0;
     let mut last_bit = (test_data[0] >> 63) & 1; // Extract the MSB of the first word
@@ -209,9 +213,6 @@ pub fn runs_test(test_data: &[u64]) -> f64 {
 /// NIST Special Publication 800-22 Test 2.4
 /// Returns p value
 pub fn longest_ones_run(test_data: &[u64]) -> f64 {
-    if test_data.is_empty() {
-        return  0.0;
-    }
     const K: usize = 5;
     const PI_TABLE: [f64; K + 1] = [
         0.1344793662428856,
@@ -221,6 +222,9 @@ pub fn longest_ones_run(test_data: &[u64]) -> f64 {
         0.10381045937538147,
         0.11756019294261932,
     ];
+    if test_data.is_empty() {
+        return 0.0;
+    }
     let mut last_bit = 0;
     let mut current_run = 0;
     // The max_runs values are binned as follows:
@@ -280,9 +284,6 @@ pub fn longest_ones_run(test_data: &[u64]) -> f64 {
 /// Determine p-value via the chi2 statistic.
 /// Returns p value
 pub fn matrix_ranks(test_data: &[u64]) -> f64 {
-    if test_data.is_empty() {
-        return  0.0;
-    }
     // All matrices are square.
     const MATRIX_SIZE: usize = 32;
     // Matrix ranks are binned as follows:
@@ -290,6 +291,9 @@ pub fn matrix_ranks(test_data: &[u64]) -> f64 {
     // Expected distributions for 32x32 matrix come from:
     // NIST Special Publication 800-22 Section 3.5
     const EXPECTED_DISTRIBUTION: [f64; 3] = [0.2888, 0.5776, 0.1336];
+    if test_data.is_empty() {
+        return 0.0;
+    }
     let mut matrix_ranks: [f64; 3] = [0.0; 3];
     for chunks in test_data.chunks_exact((MATRIX_SIZE * MATRIX_SIZE) / 64) {
         let mut matrix: [u32; MATRIX_SIZE] = [0; MATRIX_SIZE];
