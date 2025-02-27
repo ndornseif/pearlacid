@@ -93,7 +93,7 @@ pub fn byte_distribution_test(test_data: &[u64]) -> f64 {
     if chi_squared == 0.0 {
         return 0.0;
     }
-    statrs::function::gamma::gamma_lr(chi_squared / 2.0, 255.0 / 2.0).clamp(0.0, 1.0)
+    statrs::function::gamma::gamma_lr(255.0 / 2.0,chi_squared / 2.0).clamp(0.0, 1.0)
 }
 
 /// Examines the average distance between u64 values with 'zero_count' leading zeroes.
@@ -225,6 +225,9 @@ pub fn runs_test(test_data: &[u64]) -> f64 {
         if last_bit != 0 {
             runs -= 1.0;
         }
+    }
+    if runs == 0.0 {
+        return 0.0;
     }
     let num_bits: f64 = test_data.len() as f64 * 64.0;
     let ones_ratio: f64 = ((num_bits / 2.0) + excess_ones) / num_bits;
