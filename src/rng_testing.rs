@@ -50,9 +50,30 @@ fn measure_reference_speed(sample_size: usize) -> f64 {
 
 /// Logarithmic quantity to specify how close to 1.0 or 0.0 a p-value is.
 /// Has a range of 0-9.9999.
-/// -0.2 * log2(min(p, 1-p)) clamped to 9.9999
+/// -0.2 * (log2(min(p, 1-p)) - 1) clamped to 9.9999
 fn p_log_stat(p: f64) -> f64 {
-    (p.min(1.0 - p).log2()).mul(-0.2).min(9.9999)
+    (p.min(1.0 - p).log2() - 1.0).mul(-0.2).min(9.9999)
+}
+
+/// Measure rng speed over sample size and report in bytes/s and cycles/bytes.
+/// Also reports speed relative to reference speed.
+fn speed_test(test_rng: &mut impl RNG, sample_size: usize ) {
+    test_rng.reseed(testdata::rng_test::STATIC_TEST_SEEDS[0]);
+    let start = std::time::Instant::now();
+    let pre_clock: u64 = unsafe { core::arch::x86_64::_rdtsc() };
+    let (_, speed) = stats::generate_test_data(test_rng, sample_size);
+    let cycle_count: f64 = unsafe { core::arch::x86_64::_rdtsc() - pre_clock } as f64;
+    let ref_speed: f64 = measure_reference_speed(sample_size);
+    let rel_speed: f64 = (speed / ref_speed) * 100.0;
+    println!(
+        "Generated {} test data in {:?}. (Speed: {}/s  ({:.4}%)) ({} cycles ({:.4} cycles/byte))",
+        utils::format_byte_count(sample_size * 8),
+        start.elapsed(),
+        utils::format_byte_count(speed as usize),
+        rel_speed,
+        cycle_count,
+        cycle_count / (sample_size as f64 * 8.0)
+    );
 }
 
 /// Perform performance tests for supplied RNG.
@@ -76,22 +97,7 @@ pub fn test_suite_with_seeds(
     // Index zero is passed, one is failed.
     let mut test_results = [0u32; 2];
     let mut p_log_stat_values = [0u32; 10];
-    test_rng.reseed(testdata::rng_test::STATIC_TEST_SEEDS[0]);
-    let start = std::time::Instant::now();
-    let pre_clock: u64 = unsafe { core::arch::x86_64::_rdtsc() };
-    let (_, speed) = stats::generate_test_data(test_rng, sample_size);
-    let cycle_count: f64 = unsafe { core::arch::x86_64::_rdtsc() - pre_clock } as f64;
-    let ref_speed: f64 = measure_reference_speed(sample_size);
-    let rel_speed: f64 = (speed / ref_speed) * 100.0;
-    println!(
-        "Generated {} test data in {:?}. (Speed: {}/s  ({:.4}%)) ({} cycles ({:.4} cycles/byte))",
-        utils::format_byte_count(sample_size * 8),
-        start.elapsed(),
-        utils::format_byte_count(speed as usize),
-        rel_speed,
-        cycle_count,
-        cycle_count / (sample_size as f64 * 8.0)
-    );
+    speed_test(test_rng, sample_size);
     for &seed in seeds.iter() {
         test_rng.reseed(seed);
         println!("Testing for seed: {:#018x}", seed);
