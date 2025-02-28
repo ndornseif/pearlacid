@@ -6,6 +6,7 @@
 
 use std::{ops::Mul, time::Duration, time::Instant};
 
+use crate::utils::write_and_print;
 use crate::{
     rngs::{self, RNG},
     stats, strings, testdata, utils,
@@ -52,6 +53,11 @@ impl TestResult {
             }
         )
     }
+}
+
+/// Get the file path used for saving test results.
+fn get_result_file_path() -> String {
+    "rslt.txt".to_owned()
 }
 
 /// Run a test function located at `TEST_F_POINTERS[test_id]`
@@ -107,13 +113,17 @@ fn test_single_seed(
     sample_size: usize,
     seed: u64,
     test_results: &mut Vec<TestResult>,
+    result_file_path: &str,
 ) {
     test_rng.reseed(seed);
-    println!("Testing for seed: {:#018x}", seed);
+    write_and_print(
+        format!("Testing for seed: {:#018x}", seed),
+        result_file_path,
+    );
     let (test_data, _) = stats::generate_test_data(test_rng, sample_size);
     for test_id in 0..TEST_F_POINTERS.len() {
         let rslt = run_single_test(&test_data, test_id);
-        println!("{}", rslt.format());
+        write_and_print(rslt.format(), result_file_path);
         test_results.push(rslt);
     }
 }
@@ -171,12 +181,27 @@ pub fn test_suite_with_seeds(
     seeds: &[u64],
     rng_name: &str,
 ) {
-    println!("\nTesting: {}", rng_name);
+    let full_start = std::time::Instant::now();
+    let result_file_path = get_result_file_path();
+    utils::write_and_print(format!("\nTesting: {}", rng_name), &result_file_path);
     let mut test_results: Vec<TestResult> = vec![];
-    print!("{}\n", speed_test(test_rng, sample_size));
+    utils::write_and_print(speed_test(test_rng, sample_size), &result_file_path);
     for &seed in seeds.iter() {
-        test_single_seed(test_rng, sample_size, seed, &mut test_results)
+        test_single_seed(
+            test_rng,
+            sample_size,
+            seed,
+            &mut test_results,
+            &result_file_path,
+        );
     }
-    println!("\nSummary for: {}", rng_name);
-    println!("{}", format_test_results_summary(&test_results));
+    utils::write_and_print(format!("\nSummary for: {}", rng_name), &result_file_path);
+    utils::write_and_print(
+        format!("{}", format_test_results_summary(&test_results)),
+        &result_file_path,
+    );
+    write_and_print(
+        format!("Total runtime: {:?}", full_start.elapsed()),
+        &result_file_path,
+    );
 }

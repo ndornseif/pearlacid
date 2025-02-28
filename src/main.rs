@@ -48,5 +48,5 @@ fn main() {
     test_suite(&mut r, TEST_SIZE, "XORShift128");
     let mut r = rngs::stream_nlarx::StreamNLARXu128::new(0);
     test_suite(&mut r, TEST_SIZE, "StreamNLARXu128");
-    println!("Total runtime: {:?}", start.elapsed());
+    println!("Full program runtime: {:?}", start.elapsed());
 }

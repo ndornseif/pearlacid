@@ -4,9 +4,30 @@
 
 //! Misc utility functions.
 
-use std::{fs::File, io::Write, path::Path, time::Duration};
+use std::{
+    fs::{File, OpenOptions},
+    io::Write,
+    path::Path,
+    time::Duration,
+};
 
 pub const INV_ROOT2: f64 = 0.7071067811865475;
+
+/// If test logs should also be saved to text file.
+const WRITE_TO_FILE: bool = true;
+
+/// Print a message to stdout and to specified file
+pub fn write_and_print(message: String, file_path: &str) {
+    println!("{}", message);
+    if WRITE_TO_FILE {
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(file_path)
+            .unwrap();
+        let _ = writeln!(file, "{}", message);
+    }
+}
 
 /// Format a duration to a fixed width.
 pub fn format_elapsed_time(duration: Duration) -> String {
