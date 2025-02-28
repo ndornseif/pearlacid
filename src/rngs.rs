@@ -215,7 +215,7 @@ pub mod lcg {
     impl Randu {
         /// Generate a number in the original reduced output space of 0 to 2**31 - 1.
         fn next_small(&mut self) -> u32 {
-            self.state = (self.state * 65539) & 0x7fffffff;
+            self.state = self.state.wrapping_mul(65539) & 0x7fffffff;
             self.state
         }
     }
