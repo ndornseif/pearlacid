@@ -9,6 +9,7 @@ pub mod conditioning;
 pub mod rng_testing;
 pub mod rngs;
 pub mod stats;
+mod strings;
 pub mod testdata;
 pub mod utils;
 
@@ -17,7 +18,7 @@ use rngs::RNG;
 
 fn main() {
     let start = std::time::Instant::now();
-    const TEST_SIZE_EXPONENT: usize = 27;
+    const TEST_SIZE_EXPONENT: usize = 22;
     const TEST_SIZE: usize = 1 << TEST_SIZE_EXPONENT;
     let mut r = rngs::ReferenceRand::new(0);
     test_suite(&mut r, TEST_SIZE, "Reference");

@@ -5,6 +5,8 @@
 //! Data used for unit tests or integration tests.
 
 pub mod rng_test {
+    pub const WEAK_SEEDS: [u64; 3] = [u64::MIN, u64::MIN + 1, u64::MAX];
+
     pub const STATIC_TEST_SEEDS: [u64; 128] = [
         0xa3ba1df0188d232b,
         0x514bf74764e33883,

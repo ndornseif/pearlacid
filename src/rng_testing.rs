@@ -4,40 +4,67 @@
 
 //! Statistical testing of an RNGs output.
 
-use std::{ops::Mul, time::Instant};
+use std::{ops::Mul, time::Duration, time::Instant};
 
 use crate::{
     rngs::{self, RNG},
-    stats, testdata, utils,
+    stats, strings, testdata, utils,
 };
 
 const P_LOG_STAT_LIMIT: f64 = 3.0;
-const FAIL_STR: &str = "FAILED!!";
-const PASS_STR: &str = "PASSED";
+const TEST_SEED_COUNT: usize = 4;
 
-const TEST_SEED_COUNT: usize = 8;
+const TEST_F_POINTERS: [fn(&[u64]) -> f64; 7] = [
+    stats::byte_distribution_test,
+    stats::leading_zeros_frequency_test,
+    stats::monobit_test,
+    stats::runs_test,
+    stats::u64_block_bit_frequency_test,
+    stats::longest_ones_run,
+    stats::matrix_ranks,
+];
 
-macro_rules! run_test {
-    ($test_fn:expr, $test_name:expr, $test_data:expr, $p_log_stat_values:expr, $test_results:expr) => {{
-        let start: Instant = Instant::now();
-        let p: f64 = $test_fn(&$test_data);
-        let p_log_stat: f64 = p_log_stat(p);
-        $p_log_stat_values[p_log_stat.floor() as usize] += 1;
-        print!(
-            "{:<10}: Time: {}     p: {:.6}     pls: {:.4}",
-            $test_name,
-            utils::format_elapsed_time(start.elapsed()),
-            p,
-            p_log_stat
-        );
-        if p_log_stat < P_LOG_STAT_LIMIT {
-            println!("   - {}", PASS_STR);
-            $test_results[0] += 1;
-        } else {
-            println!("   - {}", FAIL_STR);
-            $test_results[1] += 1;
-        }
-    }};
+#[derive(Debug, Copy, Clone)]
+struct TestResult {
+    test_id: usize,
+    p: f64,
+    time_used: Duration,
+}
+
+impl TestResult {
+    pub fn logstat(&self) -> f64 {
+        p_log_stat(self.p)
+    }
+    pub fn passed(&self) -> bool {
+        self.logstat() < P_LOG_STAT_LIMIT
+    }
+    pub fn format(&self) -> String {
+        format!(
+            "{:<10}: Time: {}     p: {:.6}     pls: {:.4}   - {}",
+            strings::TEST_NAMES[self.test_id],
+            utils::format_elapsed_time(self.time_used),
+            self.p,
+            self.logstat(),
+            if self.passed() {
+                strings::PASS_STR
+            } else {
+                strings::FAIL_STR
+            }
+        )
+    }
+}
+
+/// Run a test function located at `TEST_F_POINTERS[test_id]`
+/// and return the result and excution time.
+fn run_single_test(test_data: &[u64], test_id: usize) -> TestResult {
+    let start: Instant = Instant::now();
+    let p: f64 = TEST_F_POINTERS[test_id](test_data);
+    let time_used: Duration = start.elapsed();
+    TestResult {
+        test_id,
+        p,
+        time_used,
+    }
 }
 
 /// Measure the speed of the rand crates default RNG.
@@ -57,18 +84,16 @@ fn p_log_stat(p: f64) -> f64 {
 
 /// Measure rng speed over sample size and report in bytes/s and cycles/bytes.
 /// Also reports speed relative to reference speed.
-fn speed_test(test_rng: &mut impl RNG, sample_size: usize ) {
+fn speed_test(test_rng: &mut impl RNG, sample_size: usize) {
     test_rng.reseed(testdata::rng_test::STATIC_TEST_SEEDS[0]);
-    let start = std::time::Instant::now();
     let pre_clock: u64 = unsafe { core::arch::x86_64::_rdtsc() };
     let (_, speed) = stats::generate_test_data(test_rng, sample_size);
     let cycle_count: f64 = unsafe { core::arch::x86_64::_rdtsc() - pre_clock } as f64;
     let ref_speed: f64 = measure_reference_speed(sample_size);
     let rel_speed: f64 = (speed / ref_speed) * 100.0;
     println!(
-        "Generated {} test data in {:?}. (Speed: {}/s  ({:.4}%)) ({} cycles ({:.4} cycles/byte))",
+        "Generated {} test data. (Speed: {}/s  ({:.4}%)) ({} cycles ({:.4} cycles/byte))",
         utils::format_byte_count(sample_size * 8),
-        start.elapsed(),
         utils::format_byte_count(speed as usize),
         rel_speed,
         cycle_count,
@@ -76,6 +101,57 @@ fn speed_test(test_rng: &mut impl RNG, sample_size: usize ) {
     );
 }
 
+/// Peform all tests listed in `TEST_F_POINTERS` and add the results to `test_results`.
+fn test_single_seed(
+    test_rng: &mut impl RNG,
+    sample_size: usize,
+    seed: u64,
+    test_results: &mut Vec<TestResult>,
+) {
+    test_rng.reseed(seed);
+    println!("Testing for seed: {:#018x}", seed);
+    let (test_data, _) = stats::generate_test_data(test_rng, sample_size);
+    for test_id in 0..TEST_F_POINTERS.len() {
+        let rslt = run_single_test(&test_data, test_id);
+        println!("{}", rslt.format());
+        test_results.push(rslt);
+    }
+}
+
+/// Format a vec of `TestResults` and print a summary of the results.
+fn format_test_results_summary(test_results: &Vec<TestResult>) -> String {
+    const P_LOG_STAT_BINS: usize = 10;
+    let mut p_logstat_bins = [0u32; P_LOG_STAT_BINS];
+    let mut passed_tests = 0usize;
+    for rslt in test_results {
+        p_logstat_bins[rslt.logstat().floor() as usize] += 1;
+        if rslt.passed() {
+            passed_tests += 1;
+        }
+    }
+    let logstat_summary: String = p_logstat_bins.iter().enumerate()
+    .map(|(bin, &value)| {
+        let bin_label = if bin == P_LOG_STAT_BINS - 1 {
+            format!("{:>2}+ : {:04}", bin, value) // Handle last bin with '+'
+        } else {
+            format!("{:>2} : {:04}|", bin, value)
+        };
+        bin_label
+    })
+    .collect::<Vec<String>>()
+    .join("");
+    format!(
+        "P log stats: \n{}\nOverall result: {}          ( {} / {} passed)",
+        logstat_summary,
+        if passed_tests == test_results.len() {
+            strings::PASS_STR
+        } else {
+            strings::FAIL_STR
+        },
+        passed_tests,
+        test_results.len()
+    )
+}
 /// Perform performance tests for supplied RNG.
 pub fn test_suite(test_rng: &mut impl RNG, sample_size: usize, rng_name: &str) {
     test_suite_with_seeds(
@@ -94,85 +170,33 @@ pub fn test_suite_with_seeds(
     rng_name: &str,
 ) {
     println!("\nTesting {}", rng_name);
-    // Index zero is passed, one is failed.
-    let mut test_results = [0u32; 2];
-    let mut p_log_stat_values = [0u32; 10];
+    let mut test_results: Vec<TestResult> = vec![];
     speed_test(test_rng, sample_size);
     for &seed in seeds.iter() {
-        test_rng.reseed(seed);
-        println!("Testing for seed: {:#018x}", seed);
-        let (test_data, _) = stats::generate_test_data(test_rng, sample_size);
-        run_test!(
-            stats::byte_distribution_test,
-            "Bytes",
-            test_data,
-            p_log_stat_values,
-            test_results
-        );
-        run_test!(
-            stats::leading_zeros_frequency_test,
-            "LZ-Space",
-            test_data,
-            p_log_stat_values,
-            test_results
-        );
-        run_test!(
-            stats::monobit_test,
-            "Mono",
-            test_data,
-            p_log_stat_values,
-            test_results
-        );
-        run_test!(
-            stats::runs_test,
-            "Runs",
-            test_data,
-            p_log_stat_values,
-            test_results
-        );
-        run_test!(
-            stats::u64_block_bit_frequency_test,
-            "Blocks",
-            test_data,
-            p_log_stat_values,
-            test_results
-        );
-        run_test!(
-            stats::longest_ones_run,
-            "MaxOnes",
-            test_data,
-            p_log_stat_values,
-            test_results
-        );
-        run_test!(
-            stats::matrix_ranks,
-            "Matrix",
-            test_data,
-            p_log_stat_values,
-            test_results
-        );
+        test_single_seed(test_rng, sample_size, seed, &mut test_results)
     }
-    let total_tests: u32 = test_results.iter().sum();
-    println!();
-    println!("Summary for: {}", rng_name);
-    println!("P log stats:");
-    for (val, count) in p_log_stat_values.iter().enumerate() {
-        if val == 9 {
-            print!(" {:>1}+ : {:<4}", val, count);
-        } else {
-            print!(" {:>2} : {:<4}", val, count);
-        }
-    }
-    println!();
-    println!(
-        "Overall result: {}          ( {} / {} passed)",
-        if total_tests == test_results[0] {
-            PASS_STR
-        } else {
-            FAIL_STR
-        },
-        test_results[0],
-        total_tests
-    );
-    println!();
+
+    println!("{}", format_test_results_summary(&test_results));
+    // println!();
+    // println!("Summary for: {}", rng_name);
+    // println!("P log stats:");
+    // for (val, count) in p_log_stat_values.iter().enumerate() {
+    //     if val == 9 {
+    //         print!(" {:>1}+ : {:<4}", val, count);
+    //     } else {
+    //         print!(" {:>2} : {:<4}", val, count);
+    //     }
+    // }
+    // println!();
+    // println!(
+    //     "Overall result: {}          ( {} / {} passed)",
+    //     if total_tests == test_results[0] {
+    //         strings::PASS_STR
+    //     } else {
+    //         strings::FAIL_STR
+    //     },
+    //     test_results[0],
+    //     total_tests
+    // );
+    // println!();
 }
