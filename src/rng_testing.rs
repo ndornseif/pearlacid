@@ -84,21 +84,21 @@ fn p_log_stat(p: f64) -> f64 {
 
 /// Measure rng speed over sample size and report in bytes/s and cycles/bytes.
 /// Also reports speed relative to reference speed.
-fn speed_test(test_rng: &mut impl RNG, sample_size: usize) {
+fn speed_test(test_rng: &mut impl RNG, sample_size: usize) -> String {
     test_rng.reseed(testdata::rng_test::STATIC_TEST_SEEDS[0]);
     let pre_clock: u64 = unsafe { core::arch::x86_64::_rdtsc() };
     let (_, speed) = stats::generate_test_data(test_rng, sample_size);
     let cycle_count: f64 = unsafe { core::arch::x86_64::_rdtsc() - pre_clock } as f64;
     let ref_speed: f64 = measure_reference_speed(sample_size);
     let rel_speed: f64 = (speed / ref_speed) * 100.0;
-    println!(
+    format!(
         "Generated {} test data. (Speed: {}/s  ({:.4}%)) ({} cycles ({:.4} cycles/byte))",
         utils::format_byte_count(sample_size * 8),
         utils::format_byte_count(speed as usize),
         rel_speed,
         cycle_count,
         cycle_count / (sample_size as f64 * 8.0)
-    );
+    )
 }
 
 /// Peform all tests listed in `TEST_F_POINTERS` and add the results to `test_results`.
@@ -129,17 +129,19 @@ fn format_test_results_summary(test_results: &Vec<TestResult>) -> String {
             passed_tests += 1;
         }
     }
-    let logstat_summary: String = p_logstat_bins.iter().enumerate()
-    .map(|(bin, &value)| {
-        let bin_label = if bin == P_LOG_STAT_BINS - 1 {
-            format!("{:>2}+ : {:04}", bin, value) // Handle last bin with '+'
-        } else {
-            format!("{:>2} : {:04}|", bin, value)
-        };
-        bin_label
-    })
-    .collect::<Vec<String>>()
-    .join("");
+    let logstat_summary: String = p_logstat_bins
+        .iter()
+        .enumerate()
+        .map(|(bin, &value)| {
+            let bin_label = if bin == P_LOG_STAT_BINS - 1 {
+                format!("{:>2}+ : {:04}", bin, value) // Handle last bin with '+'
+            } else {
+                format!("{:>2} : {:04}|", bin, value)
+            };
+            bin_label
+        })
+        .collect::<Vec<String>>()
+        .join("");
     format!(
         "P log stats: \n{}\nOverall result: {}          ( {} / {} passed)",
         logstat_summary,
@@ -169,34 +171,12 @@ pub fn test_suite_with_seeds(
     seeds: &[u64],
     rng_name: &str,
 ) {
-    println!("\nTesting {}", rng_name);
+    println!("\nTesting: {}", rng_name);
     let mut test_results: Vec<TestResult> = vec![];
-    speed_test(test_rng, sample_size);
+    print!("{}\n", speed_test(test_rng, sample_size));
     for &seed in seeds.iter() {
         test_single_seed(test_rng, sample_size, seed, &mut test_results)
     }
-
+    println!("\nSummary for: {}", rng_name);
     println!("{}", format_test_results_summary(&test_results));
-    // println!();
-    // println!("Summary for: {}", rng_name);
-    // println!("P log stats:");
-    // for (val, count) in p_log_stat_values.iter().enumerate() {
-    //     if val == 9 {
-    //         print!(" {:>1}+ : {:<4}", val, count);
-    //     } else {
-    //         print!(" {:>2} : {:<4}", val, count);
-    //     }
-    // }
-    // println!();
-    // println!(
-    //     "Overall result: {}          ( {} / {} passed)",
-    //     if total_tests == test_results[0] {
-    //         strings::PASS_STR
-    //     } else {
-    //         strings::FAIL_STR
-    //     },
-    //     test_results[0],
-    //     total_tests
-    // );
-    // println!();
 }
