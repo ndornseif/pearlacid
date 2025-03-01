@@ -177,6 +177,18 @@ Determines the rank of each matrix over GF(2) and bins the results into three ca
 Calculates the p-value based on the χ² statistic.
 Based on NIST Special Publication 800-22 Test 2.5
 
+## Dependencies 
+
+### Rust
+- [crono](https://crates.io/crates/chrono)
+- [statrs](https://crates.io/crates/statrs)
+- [rand](https://crates.io/crates/rand)
+
+### Python
+Only required when generating new test data using the python utils.
+- [numpy](https://pypi.org/project/numpy/)
+- [sympy](https://pypi.org/project/sympy/)
+
 ## License
 
 Licensed under either of the following, at your option:
