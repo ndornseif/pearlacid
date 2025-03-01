@@ -14,10 +14,10 @@ use crate::{
 
 const P_LOG_STAT_LIMIT_MARGINAL: f64 = 2.0;
 const P_LOG_STAT_LIMIT_FAIL: f64 = 4.0;
-/// The fraction of all tests that can be marginal 
+/// The fraction of all tests that can be marginal
 /// while returning a passed overall result.
 const MAX_MARGINAL_FRACTION: f64 = 0.05;
-const TEST_SEED_COUNT: usize = 128;
+const TEST_SEED_COUNT: usize = 16;
 
 const TEST_F_POINTERS: [fn(&[u64]) -> f64; 7] = [
     stats::byte_distribution_test,
@@ -68,8 +68,13 @@ impl TestResult {
 }
 
 /// Get the file path used for saving test results.
-fn get_result_file_path() -> String {
-    "rslt.txt".to_owned()
+fn get_result_file_path(rng_name: &str) -> String {
+    let mut strvec: Vec<String> = vec![chrono::Local::now()
+        .format("pearlacid-%Y-%m-%dT%H:%M:%S-")
+        .to_string()];
+    strvec.push(rng_name.to_string());
+    strvec.push(".txt".to_string());
+    strvec.join("")
 }
 
 /// Run a test function located at `TEST_F_POINTERS[test_id]`
@@ -140,6 +145,36 @@ fn test_single_seed(
     }
 }
 
+fn weak_seeds_tests(
+    test_rng: &mut impl RNG,
+    sample_size: usize,
+    result_file_path: &str
+) -> Vec<u64>{
+    let mut found_weak_seeds: Vec<u64> = vec![];
+    for seed in testdata::rng_test::WEAK_SEEDS {
+        write_and_print(
+            format!("Testing weak seed: {:#018x}", seed),
+            result_file_path,
+        );
+        test_rng.reseed(seed);
+        let (test_data, _) = stats::generate_test_data(test_rng, sample_size);
+        let mut seed_test_results: Vec<TestResult> = vec![];
+        for test_id in 0..TEST_F_POINTERS.len() {
+            let rslt = run_single_test(&test_data, test_id);
+            write_and_print(rslt.format(), result_file_path);
+            seed_test_results.push(rslt);
+        }
+        for rslt in seed_test_results {
+            if rslt.failed() {
+                found_weak_seeds.push(seed);
+                break;
+            }
+        } 
+    }
+    found_weak_seeds
+
+}
+
 /// Format a vec of `TestResults` and print a summary of the results.
 fn format_test_results_summary(test_results: &Vec<TestResult>) -> String {
     const P_LOG_STAT_BINS: usize = 10;
@@ -158,12 +193,11 @@ fn format_test_results_summary(test_results: &Vec<TestResult>) -> String {
         .iter()
         .enumerate()
         .map(|(bin, &value)| {
-            let bin_label = if bin == P_LOG_STAT_BINS - 1 {
+            if bin == P_LOG_STAT_BINS - 1 {
                 format!("{:>2}+ : {:04}", bin, value) // Handle last bin with '+'
             } else {
                 format!("{:>2} : {:04}|", bin, value)
-            };
-            bin_label
+            }
         })
         .collect::<Vec<String>>()
         .join("");
@@ -189,6 +223,7 @@ pub fn test_suite(test_rng: &mut impl RNG, sample_size: usize, rng_name: &str) {
         sample_size,
         &testdata::rng_test::STATIC_TEST_SEEDS[0..TEST_SEED_COUNT],
         rng_name,
+        true
     );
 }
 /// Perform performance tests for supplied RNG.
@@ -198,9 +233,10 @@ pub fn test_suite_with_seeds(
     sample_size: usize,
     seeds: &[u64],
     rng_name: &str,
+    test_weak_seeds: bool
 ) {
     let full_start = std::time::Instant::now();
-    let result_file_path = get_result_file_path();
+    let result_file_path = get_result_file_path(rng_name);
     utils::write_and_print(format!("\nTesting: {}", rng_name), &result_file_path);
     let mut test_results: Vec<TestResult> = vec![];
     utils::write_and_print(speed_test(test_rng, sample_size), &result_file_path);
@@ -213,9 +249,12 @@ pub fn test_suite_with_seeds(
             &result_file_path,
         );
     }
+    if test_weak_seeds {
+        utils::write_and_print(format!("Found weak seeds: {:?}",weak_seeds_tests(test_rng, sample_size, &result_file_path)), &result_file_path);        
+    }
     utils::write_and_print(format!("\nSummary for: {}", rng_name), &result_file_path);
     utils::write_and_print(
-        format!("{}", format_test_results_summary(&test_results)),
+        format_test_results_summary(&test_results),
         &result_file_path,
     );
     write_and_print(
