@@ -148,8 +148,8 @@ fn test_single_seed(
 fn weak_seeds_tests(
     test_rng: &mut impl RNG,
     sample_size: usize,
-    result_file_path: &str
-) -> Vec<u64>{
+    result_file_path: &str,
+) -> Vec<u64> {
     let mut found_weak_seeds: Vec<u64> = vec![];
     for seed in testdata::rng_test::WEAK_SEEDS {
         write_and_print(
@@ -169,10 +169,9 @@ fn weak_seeds_tests(
                 found_weak_seeds.push(seed);
                 break;
             }
-        } 
+        }
     }
     found_weak_seeds
-
 }
 
 /// Format a vec of `TestResults` and print a summary of the results.
@@ -223,7 +222,7 @@ pub fn test_suite(test_rng: &mut impl RNG, sample_size: usize, rng_name: &str) {
         sample_size,
         &testdata::rng_test::STATIC_TEST_SEEDS[0..TEST_SEED_COUNT],
         rng_name,
-        true
+        true,
     );
 }
 /// Perform performance tests for supplied RNG.
@@ -233,7 +232,7 @@ pub fn test_suite_with_seeds(
     sample_size: usize,
     seeds: &[u64],
     rng_name: &str,
-    test_weak_seeds: bool
+    test_weak_seeds: bool,
 ) {
     let full_start = std::time::Instant::now();
     let result_file_path = get_result_file_path(rng_name);
@@ -250,7 +249,13 @@ pub fn test_suite_with_seeds(
         );
     }
     if test_weak_seeds {
-        utils::write_and_print(format!("Found weak seeds: {:?}",weak_seeds_tests(test_rng, sample_size, &result_file_path)), &result_file_path);        
+        utils::write_and_print(
+            format!(
+                "Found weak seeds: {:?}",
+                weak_seeds_tests(test_rng, sample_size, &result_file_path)
+            ),
+            &result_file_path,
+        );
     }
     utils::write_and_print(format!("\nSummary for: {}", rng_name), &result_file_path);
     utils::write_and_print(
