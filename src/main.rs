@@ -18,7 +18,7 @@ use rngs::RNG;
 
 fn main() {
     let start = std::time::Instant::now();
-    const TEST_SIZE_EXPONENT: usize = 22;
+    const TEST_SIZE_EXPONENT: usize = 20;
     const TEST_SIZE: usize = 1 << TEST_SIZE_EXPONENT;
     let mut r = rngs::ReferenceRand::new(0);
     test_suite(&mut r, TEST_SIZE, "Reference");

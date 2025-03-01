@@ -12,8 +12,12 @@ use crate::{
     stats, strings, testdata, utils,
 };
 
-const P_LOG_STAT_LIMIT: f64 = 3.0;
-const TEST_SEED_COUNT: usize = 4;
+const P_LOG_STAT_LIMIT_MARGINAL: f64 = 2.0;
+const P_LOG_STAT_LIMIT_FAIL: f64 = 4.0;
+/// The fraction of all tests that can be marginal 
+/// while returning a passed overall result.
+const MAX_MARGINAL_FRACTION: f64 = 0.05;
+const TEST_SEED_COUNT: usize = 128;
 
 const TEST_F_POINTERS: [fn(&[u64]) -> f64; 7] = [
     stats::byte_distribution_test,
@@ -37,7 +41,13 @@ impl TestResult {
         p_log_stat(self.p)
     }
     pub fn passed(&self) -> bool {
-        self.logstat() < P_LOG_STAT_LIMIT
+        self.logstat() < P_LOG_STAT_LIMIT_MARGINAL
+    }
+    pub fn marginal(&self) -> bool {
+        (P_LOG_STAT_LIMIT_MARGINAL..=P_LOG_STAT_LIMIT_FAIL).contains(&self.logstat())
+    }
+    pub fn failed(&self) -> bool {
+        self.logstat() > P_LOG_STAT_LIMIT_FAIL
     }
     pub fn format(&self) -> String {
         format!(
@@ -48,6 +58,8 @@ impl TestResult {
             self.logstat(),
             if self.passed() {
                 strings::PASS_STR
+            } else if self.marginal() {
+                strings::MARGINAL_STR
             } else {
                 strings::FAIL_STR
             }
@@ -132,11 +144,14 @@ fn test_single_seed(
 fn format_test_results_summary(test_results: &Vec<TestResult>) -> String {
     const P_LOG_STAT_BINS: usize = 10;
     let mut p_logstat_bins = [0u32; P_LOG_STAT_BINS];
-    let mut passed_tests = 0usize;
+    let mut failed_tests = 0usize;
+    let mut marginal_tests = 0usize;
     for rslt in test_results {
         p_logstat_bins[rslt.logstat().floor() as usize] += 1;
-        if rslt.passed() {
-            passed_tests += 1;
+        if rslt.marginal() {
+            marginal_tests += 1;
+        } else if rslt.failed() {
+            failed_tests += 1;
         }
     }
     let logstat_summary: String = p_logstat_bins
@@ -152,16 +167,19 @@ fn format_test_results_summary(test_results: &Vec<TestResult>) -> String {
         })
         .collect::<Vec<String>>()
         .join("");
+    let total_tests: usize = test_results.len();
     format!(
-        "P log stats: \n{}\nOverall result: {}          ( {} / {} passed)",
+        "P log stats: \n{}\nOverall result: {}          ( {} passed; {} marginal; {} failed; {} total)",
         logstat_summary,
-        if passed_tests == test_results.len() {
-            strings::PASS_STR
-        } else {
+        if failed_tests > 0 || marginal_tests as f64 > MAX_MARGINAL_FRACTION * total_tests as f64{
             strings::FAIL_STR
+        } else {
+            strings::PASS_STR
         },
-        passed_tests,
-        test_results.len()
+        total_tests - failed_tests - marginal_tests,
+        marginal_tests,
+        failed_tests,
+        total_tests
     )
 }
 /// Perform performance tests for supplied RNG.
