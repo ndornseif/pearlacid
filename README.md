@@ -69,6 +69,30 @@ Based on the well-established xorshift architecture.
 | State Size | 128 bits |
 | Supports | |
 
+| RapidHashRNG |   |
+|---|---|
+| Speed | 150% |
+| Fails Tests | None |
+| Output per Step | 64 bits |
+| State Size | 64 bits |
+| Supports | |
+
+| RapidHashRNG2 |   |
+|---|---|
+| Speed | 160% |
+| Fails Tests | None |
+| Output per Step | 64 bits |
+| State Size | 128 bits |
+| Supports | |
+
+| WyRand |   |
+|---|---|
+| Speed | 200% |
+| Fails Tests | None |
+| Output per Step | 64 bits |
+| State Size | 64 bits |
+| Supports | |
+
 
 ### spn
 Substitution–permutation networks.

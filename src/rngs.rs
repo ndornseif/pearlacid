@@ -169,6 +169,138 @@ pub mod xorshift {
             ];
         }
     }
+
+    /// RapidHash-based PRNG implementation
+    pub struct RapidHashRNG {
+        state: u64,
+    }
+
+    impl RNG for RapidHashRNG {
+        fn new(seed: u64) -> Self {
+            let mut rng = Self { state: seed };
+            // Mix the initial state to avoid poor quality with simple seeds
+            for _ in 0..8 {
+                rng.next();
+            }
+            rng
+        }
+
+        fn next(&mut self) -> u64 {
+            // RapidHash-inspired mixing function
+            // This is a simplified version focusing on good avalanche properties
+            let mut value = self.state;
+            
+            // First mixing round
+            value ^= value >> 32;
+            value = value.wrapping_mul(0x9e3779b97f4a7c15);
+            value ^= value >> 32;
+            
+            // Second mixing round with different constants
+            value = value.wrapping_mul(0xbf58476d1ce4e5b9);
+            value ^= value >> 32;
+            
+            // Third mixing round
+            value = value.wrapping_mul(0x94d049bb133111eb);
+            value ^= value >> 32;
+            
+            // Update state with the mixed value
+            self.state = self.state.wrapping_add(1);
+            
+            value
+        }
+
+        fn next_u32(&mut self) -> u32 {
+            self.next() as u32
+        }
+
+        fn advance(&mut self, delta: usize) {
+            // Simply advance the state counter by the specified amount
+            self.state = self.state.wrapping_add(delta as u64);
+        }
+
+        fn reseed(&mut self, seed: u64) {
+            *self = Self::new(seed);
+        }
+    }
+
+    pub struct WyRand {
+        seed: u64,
+    }
+
+    impl RNG for WyRand {
+        fn new(seed: u64) -> Self {
+            let mut new_rng = Self { seed };
+            for _ in 0..8 {
+                let _ = new_rng.next();
+            }
+            new_rng
+        }
+
+        fn next(&mut self) -> u64 {
+            self.seed = self.seed.wrapping_add(0xa0761d6478bd642f);
+            let t = (self.seed as u128).wrapping_mul((self.seed ^ 0xe7037ed1a0b428db) as u128);
+            (t.wrapping_shr(64) ^ t) as u64
+        }
+
+        fn next_u32(&mut self) -> u32 {
+            self.next() as u32
+        }
+
+        fn advance(&mut self, delta: usize) {
+            for _ in 0..delta {
+                let _ = self.next();
+            }
+        }
+
+        fn reseed(&mut self, seed: u64) {
+            self.seed = seed;
+        }
+    }
+
+    pub struct RapidHashRNG2 {
+        state: u64,
+        seed: u64,
+    }
+
+    impl RapidHashRNG2 {
+        /// A simple, fast mixing function (inspired by SplitMix64/rapidhash)
+        #[inline]
+        fn hash64(x: u64) -> u64 {
+            let mut z = x.wrapping_add(0x9E3779B97F4A7C15);
+            z = (z ^ (z >> 30)).wrapping_mul(0xBF58476D1CE4E5B9);
+            z = (z ^ (z >> 27)).wrapping_mul(0x94D049BB133111EB);
+            z ^ (z >> 31)
+        }
+    }
+
+    impl RNG for RapidHashRNG2 {
+        fn new(seed: u64) -> Self {
+            let mut new_rng = Self { state: 0, seed };
+            for _ in 0..8 {
+                let _ = new_rng.next();
+            }
+            new_rng
+        }
+
+        fn next(&mut self) -> u64 {
+            let result = Self::hash64(self.seed.wrapping_add(self.state));
+            self.state = self.state.wrapping_add(1);
+            result
+        }
+
+        fn next_u32(&mut self) -> u32 {
+            self.next() as u32
+        }
+
+        fn advance(&mut self, delta: usize) {
+            self.state = self.state.wrapping_add(delta as u64);
+        }
+
+        fn reseed(&mut self, seed: u64) {
+            self.seed = seed;
+            self.state = 0;
+        }
+    }
 }
 
 // Linear congruential generators

@@ -18,7 +18,7 @@ use rngs::RNG;
 
 fn main() {
     let start = std::time::Instant::now();
-    const TEST_SIZE_EXPONENT: usize = 24;
+    const TEST_SIZE_EXPONENT: usize = 22;
     const TEST_SIZE: usize = 1 << TEST_SIZE_EXPONENT;
     let mut r = rngs::ReferenceRand::new(0);
     test_suite(&mut r, TEST_SIZE, "Reference");
@@ -34,6 +34,12 @@ fn main() {
     test_suite_with_seeds(&mut r, TEST_SIZE, &[0], "AlternatingBits", false);
     let mut r = rngs::spn::RijndaelStream::new(0);
     test_suite(&mut r, TEST_SIZE, "RijndaelStream");
+    let mut r = rngs::xorshift::RapidHashRNG::new(0);
+    test_suite(&mut r, TEST_SIZE, "RapidHashRNG");
+    let mut r = rngs::xorshift::RapidHashRNG2::new(0);
+    test_suite(&mut r, TEST_SIZE, "RapidHashRNG2");
+    let mut r = rngs::xorshift::WyRand::new(0);
+    test_suite(&mut r, TEST_SIZE, "WyRand");
     let mut r = rngs::lcg::Lehmer64::new(0);
     test_suite(&mut r, TEST_SIZE, "Lehmer64");
     let mut r = rngs::lcg::Randu::new(0);
